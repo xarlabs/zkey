@@ -1,1 +1,1 @@
-# zklogin
+# Hikari —— zkLogin for Starknet
