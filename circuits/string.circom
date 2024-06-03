@@ -15,7 +15,7 @@ template Len(str_max_len) {
   var tmpLen = 0;
 
   for (var i = 0; i < str_max_len; i++) {
-    tmpLen = tmpLen + (text[i] == 0 ? 0 : 1);  // 直接在这里检查每个字符
+    tmpLen = tmpLen + (text[i] == 0 ? 0 : 1); 
   }
 
   length <-- tmpLen;

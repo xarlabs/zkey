@@ -34,7 +34,8 @@ snarkjs groth16 setup "$BUILD_DIR"/"$CIRCUIT_NAME".r1cs "$PHASE1" "$BUILD_DIR"/"
 end=`date +%s`
 echo "DONE ($((end-start))s)"
 
-# 注释掉以下是为了节省测试时间
+# Comment to save time on testing
+
 # echo "****CONTRIBUTE TO THE PHASE 2 CEREMONY****"
 # start=`date +%s`
 # echo "test" | snarkjs zkey contribute "$BUILD_DIR"/"$CIRCUIT_NAME"_0.zkey "$BUILD_DIR"/"$CIRCUIT_NAME"_1.zkey --name="1st Contributor Name"
