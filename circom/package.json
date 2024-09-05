@@ -2,7 +2,7 @@
   "name": "zklogin",
   "version": "1.0.0",
   "main": "index.js",
-  "author": "ppoliani <ppoliani@gmail.com>",
+  "author": "Zerobase Team",
   "license": "MIT",
   "scripts": {
     "compile": "circom circuits/zkin.circom --r1cs --sym --wasm -o build -l node_modules",
