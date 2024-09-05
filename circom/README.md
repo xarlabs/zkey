@@ -62,8 +62,3 @@ The circuit will begin executing and produce the output.
 ## Circuit Details
 
 For more detailed information about the circuit, please refer to the comments in `/circuit/ZKLogin.circom`.
-
-## Reference
-  [zkin-circuit](https://github.com/Apocentre/zkin-circuit)
-
-  [zk-email-verify](https://github.com/zkemail/zk-email-verify)
