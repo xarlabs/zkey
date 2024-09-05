@@ -10,7 +10,7 @@ openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", ta
 alexandria_ascii = { git = "https://github.com/keep-starknet-strange/alexandria.git"}
 ```
 
-#### 工具版本
+#### Version of the environment
 
 ```
 scarb --version
