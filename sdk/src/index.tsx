@@ -1,0 +1,1 @@
+export { ZkLoginProvider as default } form "@/components/ZkLoginProvider";
