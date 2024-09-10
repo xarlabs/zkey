@@ -70,6 +70,12 @@ const prodConfig = {
       commonjs: "react-dom",
       amd: "react-dom",
     },
+    starknet: {
+      root: "starknet",
+      commonjs2: "starknet",
+      commonjs: "starknet",
+      amd: "starknet",
+    },
   },
 };
 module.exports = merge(prodConfig, baseConfig);

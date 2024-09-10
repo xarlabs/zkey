@@ -1,1 +1,6 @@
-export { ZkLoginProvider as default } form "@/components/ZkLoginProvider";
+export {
+  default as ZKeyLoginProvider,
+  useZkState,
+  useZkDispatcher,
+  useZkContext,
+} from "./components/ZkLoginProvider";

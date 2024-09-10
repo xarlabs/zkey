@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   stark,
   RpcProvider,
@@ -14,9 +14,10 @@ import { ZkStateContext, ZkDispatcherContext } from "./Provider";
 export { useZkState, useZkDispatcher, useZkContext } from "./Provider";
 import { IZkLoginProviderProps, IUserInfo, IWalletConfig, IWalletDetail, IZkState } from "./types";
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
-import { nodeUrl } from "../walletConfig";
-import { generateRandomness, generateNonce } from "@/utils/wallet";
-import walletAbi from "../walletAbi.json";
+import { nodeUrl } from "../../config/walletConfig";
+import { generateRandomness, generateNonce, generateAccountAddress } from "@/utils/wallet";
+import { getJWTData, createInputs } from "@/utils/proof";
+import walletAbi from "@/config/walletAbi.json";
 import { getSalt } from "@/http";
 
 const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
@@ -40,15 +41,91 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   // L3账号实例 通过STRK作为gas交易
   const [globalL3Account, setGlobalL3Account] = useState<AccountInterface | null>(null);
 
-  const handleLogIn = useCallback(async (jwtToken: string) => {
-    setLoginLoading(true);
-    setLoadingContent("Getting Salt");
-    let salt = ""; // 获取salt
-    try {
-      const res = await getSalt(jwtToken);
-      salt = res.data;
-    } catch (error) {}
-  }, []);
+  const handleLogIn = useCallback(
+    async (jwtToken: string) => {
+      const { publicKey, randomness, exp, privateKey } = (walletConfig as IWalletConfig) || {};
+      setLoginLoading(true);
+      setLoadingContent("Getting Salt");
+      let salt = "";
+      // 获取salt
+      try {
+        const res = await getSalt(jwtToken);
+        salt = res.data;
+      } catch (error) {
+        console.log("error", error);
+        setLoginLoading(false);
+        throw new Error("get Salt error");
+      }
+      // 解析jwt
+      const jwtData = getJWTData(jwtToken);
+      // 解析加密数据
+      const input = await createInputs(jwtData, {
+        salt,
+        publicKey,
+        randomness,
+        exp,
+      });
+
+      setLoadingContent("Calculating Address");
+
+      // 创建钱包
+      const {
+        OZaccount,
+        OZcontractAddress,
+        OZaccountConstructorCallData,
+        sub,
+        pub_hash,
+        isDeploy,
+      } = await generateAccountAddress({
+        privateKey,
+        provider: provider.current,
+        jwtToken: jwtToken,
+        exp,
+        salt,
+      });
+
+      // L3 实例
+      const userL3Account = new Account(
+        provider.current,
+        OZcontractAddress,
+        privateKey,
+        undefined,
+        constants.TRANSACTION_VERSION.V3,
+      );
+
+      // 组装钱包数据
+      const walletOptions: IWalletDetail = {
+        privateKey,
+        publicKey,
+        address: OZcontractAddress,
+        callData: OZaccountConstructorCallData,
+        salt: salt,
+        input,
+        pub_hash,
+        sub,
+        exp,
+        isDeploy,
+      };
+
+      console.log("jwtData", jwtData);
+      const { name, picture, email, given_name, family_name } = jwtData;
+      const userInfo = { name, picture, email, given_name, family_name };
+
+      handleLocalStorage("set", StorageEnum["USER_INFO"], JSON.stringify(userInfo));
+      handleLocalStorage("set", StorageEnum.WALLET_DETAIL, JSON.stringify(walletOptions));
+      // 存储钱包数据
+      setWalletDetail(walletOptions);
+      setIsDeploy(isDeploy);
+      setGlobalAccount(OZaccount);
+      setGlobalL3Account(userL3Account);
+
+      setUserInfo(userInfo);
+      setLoadingContent("");
+      setLoginLoading(false);
+      handleLogInCallback && handleLogInCallback(userInfo);
+    },
+    [walletConfig],
+  );
 
   // 退出登录清除所有状态
   const handleUserLogOut = useCallback(() => {

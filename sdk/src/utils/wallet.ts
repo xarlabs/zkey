@@ -1,38 +1,22 @@
+import { CallData, hash, Account, cairo } from "starknet";
+
 import { buildEddsa, buildPoseidon } from "circomlibjs";
-function isBytes(a: any): boolean {
-  return (
-    a instanceof Uint8Array ||
-    (a != null && typeof a === "object" && a.constructor.name === "Uint8Array")
-  );
-}
 
-function bytesToHex(bytes) {
-  if (!isBytes(bytes)) {
-    throw new Error("Uint8Array expected");
-  }
-  const hexes = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, "0"));
-  // pre-caching improves the speed 6x
-  let hex = "";
-  for (let i = 0; i < bytes.length; i++) {
-    hex += hexes[bytes[i]];
-  }
-  return hex;
-}
+import {
+  toBigIntBE,
+  randomBytes,
+  findClaimLocation,
+  base64ToAscii,
+  asciiCodesToString,
+} from "./compute";
 
-function toBigIntBE(bytes) {
-  const hex = bytesToHex(bytes);
-  if (hex.length === 0) {
-    return BigInt(0);
-  }
-  return BigInt(`0x$ {hex}`);
-}
+import { OZaccountClassHash } from "../config/walletConfig";
 
-function randomBytes(bytesLength = 32) {
-  if (window.crypto && typeof window.crypto.getRandomValues === "function") {
-    return window.crypto.getRandomValues(new Uint8Array(bytesLength));
-  }
-  throw new Error("crypto.getRandomValues must be defined");
-}
+import { MAX_ISS_BYTES } from "../config/const";
+
+import { IContractAddress } from "./type";
+
+import { checkWalletDeploy } from "@/http";
 
 /**
    * 生成指定长度的随机数，并将其转换为十六进制字符串格式的大整数表示
@@ -64,4 +48,105 @@ export async function generateNonce(publicKey: string, randomness: string, exp: 
   const nonce = poseidon([p.toString(), randomness, exp]);
   const data = F.toObject(nonce).toString();
   return data;
+}
+
+export async function getContractAddress({
+  provider,
+  privateKey,
+  salt,
+  jwtToken,
+  exp,
+}: IContractAddress) {
+  try {
+    // 验证JWT Token格式
+    if (!jwtToken.includes(".")) {
+      throw new Error("Invalid JWT Token format");
+    }
+    const [header, payload, signature] = jwtToken.split(".");
+
+    const decodedPayload = JSON.parse(atob(payload as string));
+
+    const data = {
+      jwt: `${header}.${payload}`,
+      sig: signature,
+      iss: decodedPayload.iss,
+      sub: decodedPayload.sub,
+      aud: decodedPayload.aud,
+      nonce: decodedPayload.nonce,
+      exp,
+    };
+
+    const issClaim = findClaimLocation(data.jwt, data.iss, MAX_ISS_BYTES);
+    const audClaim = findClaimLocation(data.jwt, data.aud, MAX_ISS_BYTES);
+    let iss_result = base64ToAscii(issClaim, 32);
+    let aud_result = base64ToAscii(audClaim, 44);
+
+    let subascii = asciiCodesToString(data.sub);
+
+    let poseidon = await buildPoseidon();
+    let eddsa = await buildEddsa();
+    const F = eddsa.babyJub.F;
+    let sub_hash = F.toObject(poseidon([subascii, salt]));
+
+    let param_data = {
+      iss1: cairo.uint256(iss_result.firstPartAscii),
+      iss2: cairo.uint256(iss_result.secondPartAscii),
+      sub: cairo.uint256(sub_hash),
+    };
+
+    let param = CallData.compile(param_data);
+
+    let pub_hash = hash.computeHashOnElements(param);
+    let OZaccountConstructorCallData = CallData.compile({ publicKey: pub_hash });
+
+    const OZcontractAddress = hash.calculateContractAddressFromHash(
+      pub_hash,
+      OZaccountClassHash,
+      OZaccountConstructorCallData,
+      0,
+    );
+
+    const OZaccount = new Account(provider, OZcontractAddress, privateKey);
+
+    return {
+      sub: param_data.sub,
+      pub_hash,
+      OZaccount,
+      OZcontractAddress,
+      OZaccountConstructorCallData,
+    };
+  } catch (error) {
+    console.error("Error in getContractAddress:", error);
+    throw error; // 重新抛出异常以保持一致性
+  }
+}
+
+export async function generateAccountAddress({
+  provider,
+  privateKey,
+  exp,
+  jwtToken,
+  salt,
+}: IContractAddress) {
+  // 计算钱包地址
+  const { OZaccount, OZcontractAddress, OZaccountConstructorCallData, pub_hash, sub } =
+    await getContractAddress({
+      provider,
+      privateKey,
+      jwtToken,
+      exp,
+      salt,
+    });
+
+  // 检查钱包是否部署
+  const res = await checkWalletDeploy(OZcontractAddress);
+
+  return {
+    isDeploy: res?.code === 0,
+    sub,
+    pub_hash,
+    OZaccount,
+    OZcontractAddress,
+    OZaccountConstructorCallData,
+  };
 }
