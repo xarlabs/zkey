@@ -1,8 +1,8 @@
-import { IHttpParams, IResOption } from "./api.d";
+import { IHttpParams, IResOption, HeaderTypeEnum } from "./api.d";
 
 const BASE_API_URL = "https://api1.x.ar/dwgo/api";
 function http(obj: IHttpParams) {
-  let { method, url, params, data, headers = {} } = obj;
+  let { method, url, params, data, headers = {}, type } = obj;
 
   // 处理url 非http url 自动拼接
   if (url.indexOf("http") === -1) {
@@ -24,15 +24,23 @@ function http(obj: IHttpParams) {
     try {
       // 判断数据是否为formData类型
       const isFormData = Object.prototype.toString.call(data) === "[object FormData]";
+
+      const contentType = type
+        ? HeaderTypeEnum[type]
+        : isFormData
+          ? "application/form-data"
+          : "application/json";
+
       let reqOption: IResOption = {
         method: method,
         headers: {
-          "Content-Type": isFormData ? "application/form-data" : "application/json",
+          "Content-Type": contentType,
           ...headers,
         },
       };
       if (data) {
-        reqOption.body = isFormData ? data : JSON.stringify(data);
+        reqOption.body =
+          isFormData || type === "urlencoded" || type === "form" ? data : JSON.stringify(data);
       }
       res = await fetch(url, reqOption);
       if (res.status !== 200) {

@@ -11,14 +11,16 @@ export const getSalt = (token: string) =>
   });
 
 //获取密钥
-export const getPubkey = (jwt: string) =>
-  http({
+export const getPubkey = (jwt: string) => {
+  const urlencoded = new URLSearchParams();
+  urlencoded.append("jwt", jwt);
+  return http({
     method: "POST",
-    url: "https://localhost:3000/api/google/getPubkey",
-    data: {
-      jwt,
-    },
+    url: "http://api1.x.ar/jsserver/api/proof/getZkPubdata",
+    data: urlencoded,
+    type: "urlencoded",
   });
+};
 
 // 检查是否deploy
 export const checkWalletDeploy = (address: string) =>

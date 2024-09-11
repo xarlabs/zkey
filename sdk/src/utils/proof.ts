@@ -1,4 +1,3 @@
-import { decode } from "base64url";
 import {
   toCircomBigIntBytes,
   sha256Pad,
@@ -40,7 +39,7 @@ export const getJWTData = (token: string): ICreateInputsData => {
     }
 
     // 解码payload部分，将其转换为可读的JSON对象
-    const decodedPayload = decode(payload);
+    const decodedPayload = JSON.parse(atob(payload));
 
     // 构建返回数据对象，包括原始JWT结构、签名以及从负载中提取的特定声明
     const data = {
@@ -65,9 +64,47 @@ export const getJWTData = (token: string): ICreateInputsData => {
   }
 };
 
-export const createInputs = async (data: ICreateInputsData, walletOpt: ICreateInputsWalletOpt) => {
+export const findJwtClaim = (data: ICreateInputsData) => {
+  const { claim: issClaim, version: issVersion } = findClaimLocation(
+    data.jwt,
+    data.iss,
+    MAX_ISS_BYTES,
+  );
+  const { claim: subClaim, version: subVersion } = findClaimLocation(
+    data.jwt,
+    data.sub,
+    MAX_SUB_BYTES,
+  );
+  const { claim: audClaim, version: audVersion } = findClaimLocation(
+    data.jwt,
+    data.aud,
+    MAX_AUD_BYTES,
+  );
+  const { claim: nonceClaim, version: nonceVersion } = findClaimLocation(
+    data.jwt,
+    data.nonce,
+    MAX_NONCE_BYTES,
+  );
+  return {
+    issClaim,
+    issVersion,
+    subClaim,
+    subVersion,
+    audClaim,
+    audVersion,
+    nonceClaim,
+    nonceVersion,
+  };
+};
+
+export const createInputs = async (
+  data: ICreateInputsData,
+  walletOpt: ICreateInputsWalletOpt,
+  jwtClaim,
+) => {
   let { jwt: msg, sig } = data;
   const { salt, publicKey, randomness, exp } = walletOpt;
+  const { issClaim, subClaim, audClaim, nonceClaim } = jwtClaim;
 
   const signature = toCircomBigIntBytes(BigInt(`0x${Buffer.from(sig, "base64").toString("hex")}`));
   const [jwtPadded, jwtPaddedLen] = await sha256Pad(
@@ -76,18 +113,15 @@ export const createInputs = async (data: ICreateInputsData, walletOpt: ICreateIn
   );
   const jwt_padded_bytes = jwtPaddedLen.toString();
   const jwt = await Uint8ArrayToCharArray(jwtPadded);
-  const issClaim = findClaimLocation(data.jwt, data.iss, MAX_ISS_BYTES);
-  const subClaim = findClaimLocation(data.jwt, data.sub, MAX_SUB_BYTES);
-  const audClaim = findClaimLocation(data.jwt, data.aud, MAX_AUD_BYTES);
-  const nonceClaim = findClaimLocation(data.jwt, data.nonce, MAX_NONCE_BYTES);
+
   // const expClaim = findClaimLocation(data.jwt, data.exp, MAX_EXP_BYTES);
+  console.log("request start");
 
-  const request = await getPubkey(data.jwt);
+  const response = await getPubkey(data.jwt);
 
-  const rsaPubkeyJson = await request.json();
+  console.log("request end --->", response);
 
-  const rsaPubkey =
-    rsaPubkeyJson.status === 200 ? toCircomBigIntBytes(BigInt(rsaPubkeyJson.data)) : "";
+  const rsaPubkey = response.status === 200 ? toCircomBigIntBytes(BigInt(response.data)) : "";
 
   const inputs = {
     jwt_segments: splitJWT(jwt),

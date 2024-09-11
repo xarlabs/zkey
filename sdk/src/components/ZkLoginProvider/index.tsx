@@ -10,13 +10,13 @@ import {
   constants,
   AccountInterface,
 } from "starknet";
-import { ZkStateContext, ZkDispatcherContext } from "./Provider";
+import { ZkPrivateContext, ZkStateContext, ZkDispatcherContext } from "./Provider";
 export { useZkState, useZkDispatcher, useZkContext } from "./Provider";
 import { IZkLoginProviderProps, IUserInfo, IWalletConfig, IWalletDetail, IZkState } from "./types";
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
 import { nodeUrl } from "../../config/walletConfig";
 import { generateRandomness, generateNonce, generateAccountAddress } from "@/utils/wallet";
-import { getJWTData, createInputs } from "@/utils/proof";
+import { getJWTData, findJwtClaim, createInputs } from "@/utils/proof";
 import walletAbi from "@/config/walletAbi.json";
 import { getSalt } from "@/http";
 
@@ -43,6 +43,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
 
   const handleLogIn = useCallback(
     async (jwtToken: string) => {
+      console.log("jwtToken -->", jwtToken);
       const { publicKey, randomness, exp, privateKey } = (walletConfig as IWalletConfig) || {};
       setLoginLoading(true);
       setLoadingContent("Getting Salt");
@@ -56,16 +57,24 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         setLoginLoading(false);
         throw new Error("get Salt error");
       }
+      console.log("salt --->", salt);
       // 解析jwt
       const jwtData = getJWTData(jwtToken);
-      // 解析加密数据
-      const input = await createInputs(jwtData, {
-        salt,
-        publicKey,
-        randomness,
-        exp,
-      });
+      console.log("jwtData -->", jwtData);
 
+      const jwtClaim = findJwtClaim(jwtData);
+      // 解析加密数据
+      const input = await createInputs(
+        jwtData,
+        {
+          salt,
+          publicKey,
+          randomness,
+          exp,
+        },
+        jwtClaim,
+      );
+      console.log("input-->", input);
       setLoadingContent("Calculating Address");
 
       // 创建钱包
@@ -82,7 +91,10 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         jwtToken: jwtToken,
         exp,
         salt,
+        jwtClaim,
       });
+
+      console.log("OZcontractAddress", OZcontractAddress);
 
       // L3 实例
       const userL3Account = new Account(
@@ -221,18 +233,39 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
     walletInit();
   }, []);
 
+  const zkPrivate = useMemo(
+    () => ({
+      loginLoading,
+      nonce: walletConfig?.nonce,
+      handleLogIn,
+    }),
+    [walletConfig?.nonce, handleLogIn],
+  );
+
   const zkState: IZkState = useMemo(
     () => ({
       userInfo,
+      globalAccount,
+      globalL3Account,
+      isDeploy,
+      walletDetail,
+      loadingContent,
     }),
     [userInfo],
   );
-  const zkDispatcher = useMemo(() => {}, []);
+  const zkDispatcher = useMemo(
+    () => ({
+      handleUserLogOut,
+    }),
+    [handleUserLogOut],
+  );
 
   return (
-    <ZkStateContext.Provider value={zkState}>
-      <ZkDispatcherContext.Provider value={zkDispatcher}>{children}</ZkDispatcherContext.Provider>
-    </ZkStateContext.Provider>
+    <ZkPrivateContext.Provider value={zkPrivate}>
+      <ZkStateContext.Provider value={zkState}>
+        <ZkDispatcherContext.Provider value={zkDispatcher}>{children}</ZkDispatcherContext.Provider>
+      </ZkStateContext.Provider>
+    </ZkPrivateContext.Provider>
   );
 };
 

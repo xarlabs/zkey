@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { ZKeyLoginProvider } from "../../src/index"; // 引入组件
+import { ZKeyLoginProvider, GoogleLoginButton } from "../../src/index"; // 引入组件
+
 import "./index.scss";
 // import WidthAutoLabel from "text-width-auto-label";
 
@@ -8,23 +9,8 @@ const App = () => {
   return (
     <ZKeyLoginProvider>
       <div className='container'>
-        <div className='text'>
-          <p>示例文本：</p>
-          <p>文本宽度自适应标签组件</p>
-        </div>
-        <div className='normal'>
-          <p>宽度100px：</p>
-          <p>文本宽度自适应标签组件</p>
-        </div>
-        <div className='style1'>
-          <p>宽度100px：</p>
-        </div>
-        <div className='style2'>
-          <p>宽度80px：</p>
-        </div>
-        <div className='style3'>
-          <p>宽度50px：</p>
-        </div>
+        <div>logIn</div>
+        <GoogleLoginButton clientId='972156063720-9c8ds0de2n7av3ke00sv3k4fo0vldf29.apps.googleusercontent.com' />
       </div>
     </ZKeyLoginProvider>
   );

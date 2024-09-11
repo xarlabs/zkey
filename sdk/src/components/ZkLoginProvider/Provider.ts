@@ -1,9 +1,19 @@
 "use client";
 import React from "react";
-import { IZkState } from "./types";
+import { IZkPrivate, IZkState, IZkDispatcher } from "./types";
 
+export const ZkPrivateContext = React.createContext<IZkPrivate | null>(null);
 export const ZkStateContext = React.createContext<IZkState | null>(null);
-export const ZkDispatcherContext = React.createContext(null);
+export const ZkDispatcherContext = React.createContext<IZkDispatcher | null>(null);
+
+export function useZkPrivate() {
+  const context = React.useContext(ZkPrivateContext);
+
+  if (context === undefined) {
+    throw new Error("useZkState must be used within a ZkStateContext");
+  }
+  return context as IZkPrivate;
+}
 
 export function useZkState() {
   const context = React.useContext(ZkStateContext);
@@ -11,7 +21,7 @@ export function useZkState() {
   if (context === undefined) {
     throw new Error("useZkState must be used within a ZkStateContext");
   }
-  return context;
+  return context as IZkState;
 }
 
 export function useZkDispatcher() {
@@ -19,7 +29,7 @@ export function useZkDispatcher() {
   if (context === undefined) {
     throw new Error("useZkyDispatcher must be used within a ZkDispatcherContext");
   }
-  return context;
+  return context as IZkDispatcher;
 }
 
 export function useZkContext() {

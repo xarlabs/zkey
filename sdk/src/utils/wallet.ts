@@ -56,7 +56,9 @@ export async function getContractAddress({
   salt,
   jwtToken,
   exp,
+  jwtClaim,
 }: IContractAddress) {
+  const { issVersion } = jwtClaim;
   try {
     // 验证JWT Token格式
     if (!jwtToken.includes(".")) {
@@ -76,10 +78,7 @@ export async function getContractAddress({
       exp,
     };
 
-    const issClaim = findClaimLocation(data.jwt, data.iss, MAX_ISS_BYTES);
-    const audClaim = findClaimLocation(data.jwt, data.aud, MAX_ISS_BYTES);
-    let iss_result = base64ToAscii(issClaim, 32);
-    let aud_result = base64ToAscii(audClaim, 44);
+    let iss_result = base64ToAscii(issVersion, 32);
 
     let subascii = asciiCodesToString(data.sub);
 
@@ -127,6 +126,7 @@ export async function generateAccountAddress({
   exp,
   jwtToken,
   salt,
+  jwtClaim,
 }: IContractAddress) {
   // 计算钱包地址
   const { OZaccount, OZcontractAddress, OZaccountConstructorCallData, pub_hash, sub } =
@@ -136,6 +136,7 @@ export async function generateAccountAddress({
       jwtToken,
       exp,
       salt,
+      jwtClaim,
     });
 
   // 检查钱包是否部署

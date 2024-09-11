@@ -63,7 +63,7 @@ const devConfig = {
     static: path.join(__dirname, "../demo/src/"),
     compress: true,
     host: "127.0.0.1",
-    port: 8686, // 启动端口
+    port: 3000, // 启动端口
     open: true, // 打开浏览器
   },
 };

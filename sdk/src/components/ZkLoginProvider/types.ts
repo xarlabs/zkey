@@ -35,6 +35,20 @@ export interface IWalletDetail {
   sub: any;
 }
 
+export interface IZkPrivate {
+  nonce: string | undefined;
+  handleLogIn: (jwtToken: string) => Promise<void>;
+}
+
 export interface IZkState {
   userInfo: IUserInfo | null;
+  globalAccount: AccountInterface | null;
+  globalL3Account: AccountInterface | null;
+  isDeploy: boolean;
+  walletDetail: IWalletDetail | null;
+  loadingContent: string;
+}
+
+export interface IZkDispatcher {
+  handleUserLogOut: () => void;
 }
