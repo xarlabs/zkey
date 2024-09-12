@@ -1,5 +1,5 @@
 {
-  "name": "ZKey-SDK",
+  "name": "ZKey-React",
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
@@ -12,7 +12,11 @@
   "license": "MIT",
   "dependencies": {
     "@react-oauth/google": "^0.12.1",
+    "big.js": "^6.2.2",
     "circomlibjs": "^0.1.7",
+    "google-protobuf": "^3.21.4",
+    "grpc-web": "^1.5.0",
+    "json-bigint": "^1.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "starknet": "^7.0.0"
@@ -23,6 +27,7 @@
     "@babel/preset-env": "^7.25.4",
     "@babel/preset-react": "^7.24.7",
     "@babel/preset-typescript": "^7.24.7",
+    "@types/big.js": "^6.2.2",
     "@types/react": "^18.3.4",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^5.17.0",

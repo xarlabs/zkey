@@ -1,4 +1,4 @@
-import { AccountInterface } from "starknet";
+import { AccountInterface, RpcProvider } from "starknet";
 
 export interface IZkLoginProviderProps {
   children: React.ReactNode;
@@ -41,14 +41,18 @@ export interface IZkPrivate {
 }
 
 export interface IZkState {
+  provider: {
+    current: RpcProvider;
+  };
   userInfo: IUserInfo | null;
   globalAccount: AccountInterface | null;
   globalL3Account: AccountInterface | null;
   isDeploy: boolean;
-  walletDetail: IWalletDetail | null;
+  walletDetail: IWalletDetail;
   loadingContent: string;
 }
 
 export interface IZkDispatcher {
   handleUserLogOut: () => void;
+  handleChangeDeploy: (state: boolean) => void;
 }
