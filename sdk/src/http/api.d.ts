@@ -18,3 +18,8 @@ export enum HeaderTypeEnum {
   "urlencoded" = "application/x-www-form-urlencoded",
   "form" = "multipart/form-data",
 }
+
+export interface IHttpResponse {
+  data: any;
+  status: number;
+}

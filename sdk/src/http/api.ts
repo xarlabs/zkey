@@ -1,4 +1,4 @@
-import { IHttpParams, IResOption, HeaderTypeEnum } from "./api.d";
+import { IHttpParams, IResOption, HeaderTypeEnum, IHttpResponse } from "./api.d";
 
 const BASE_API_URL = "https://api1.x.ar/dwgo/api";
 function http(obj: IHttpParams) {
@@ -20,7 +20,7 @@ function http(obj: IHttpParams) {
 
   let res;
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise<IHttpResponse>(async (resolve, reject) => {
     try {
       // 判断数据是否为formData类型
       const isFormData = Object.prototype.toString.call(data) === "[object FormData]";

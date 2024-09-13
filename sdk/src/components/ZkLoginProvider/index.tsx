@@ -33,7 +33,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   // 初始化钱包参数
   const [walletConfig, setWalletConfig] = useState<IWalletConfig | null>(null);
   // 钱包是否部署
-  const [isDeploy, setIsDeploy] = useState<boolean>(false);
+  const [isDeploy, handleChangeDeploy] = useState<boolean>(false);
   // 钱包详情
   const [walletDetail, setWalletDetail] = useState<IWalletDetail | null>(null);
   // 账号实例
@@ -43,7 +43,6 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
 
   const handleLogIn = useCallback(
     async (jwtToken: string) => {
-      console.log("jwtToken -->", jwtToken);
       const { publicKey, randomness, exp, privateKey } = (walletConfig as IWalletConfig) || {};
       setLoginLoading(true);
       setLoadingContent("Getting Salt");
@@ -53,14 +52,11 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         const res = await getSalt(jwtToken);
         salt = res.data;
       } catch (error) {
-        console.log("error", error);
         setLoginLoading(false);
         throw new Error("get Salt error");
       }
-      console.log("salt --->", salt);
       // 解析jwt
       const jwtData = getJWTData(jwtToken);
-      console.log("jwtData -->", jwtData);
 
       const jwtClaim = findJwtClaim(jwtData);
       // 解析加密数据
@@ -74,7 +70,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         },
         jwtClaim,
       );
-      console.log("input-->", input);
+
       setLoadingContent("Calculating Address");
 
       // 创建钱包
@@ -127,7 +123,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       handleLocalStorage("set", StorageEnum.WALLET_DETAIL, JSON.stringify(walletOptions));
       // 存储钱包数据
       setWalletDetail(walletOptions);
-      setIsDeploy(isDeploy);
+      handleChangeDeploy(isDeploy);
       setGlobalAccount(OZaccount);
       setGlobalL3Account(userL3Account);
 
@@ -147,7 +143,6 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
     handleLocalStorage("remove", StorageEnum.USER_INFO);
     handleLogOutCallback && handleLogOutCallback();
   }, [handleLogOutCallback]);
-  // const [wallet]
   useEffect(() => {
     const getNonce = async () => {
       // 随机生成的私钥
@@ -203,7 +198,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
             setWalletDetail(walletDetailParse);
             setGlobalAccount(userAccount);
             setGlobalL3Account(userL3Account);
-            setIsDeploy(isDeploy);
+            handleChangeDeploy(isDeploy);
             setUserInfo({ ...userInfoParse });
             handleLogInCallback && handleLogInCallback(userInfoParse);
           };
@@ -235,7 +230,6 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
 
   const zkPrivate = useMemo(
     () => ({
-      loginLoading,
       nonce: walletConfig?.nonce,
       handleLogIn,
     }),
@@ -244,17 +238,20 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
 
   const zkState: IZkState = useMemo(
     () => ({
+      provider: provider.current,
       userInfo,
       globalAccount,
       globalL3Account,
       isDeploy,
       walletDetail,
+      loginLoading,
       loadingContent,
     }),
     [userInfo],
   );
   const zkDispatcher = useMemo(
     () => ({
+      handleChangeDeploy,
       handleUserLogOut,
     }),
     [handleUserLogOut],

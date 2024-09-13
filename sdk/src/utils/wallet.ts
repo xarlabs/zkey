@@ -1,22 +1,21 @@
-import { CallData, hash, Account, cairo } from "starknet";
-
+import { CallData, hash, Account, cairo, uint256, TransactionStatus } from "starknet";
+import JSONbig from "json-bigint";
 import { buildEddsa, buildPoseidon } from "circomlibjs";
 
 import {
   toBigIntBE,
   randomBytes,
-  findClaimLocation,
   base64ToAscii,
   asciiCodesToString,
+  formatBalance,
+  shortNum,
 } from "./compute";
 
 import { OZaccountClassHash } from "../config/walletConfig";
 
-import { MAX_ISS_BYTES } from "../config/const";
-
 import { IContractAddress } from "./type";
 
-import { checkWalletDeploy } from "@/http";
+import { checkWalletDeploy, getProve, getGarage } from "@/http";
 
 /**
    * 生成指定长度的随机数，并将其转换为十六进制字符串格式的大整数表示
@@ -150,4 +149,84 @@ export async function generateAccountAddress({
     OZcontractAddress,
     OZaccountConstructorCallData,
   };
+}
+
+export function u256toWeb(u256: any, decimals = 18) {
+  const Num = formatBalance(uint256.uint256ToBN(u256), decimals);
+  return shortNum(Num);
+}
+
+export async function setWalletDeploy({ callData, pub_hash, provider, account }) {
+  const { transaction_hash, contract_address } = await account.deployAccount({
+    classHash: OZaccountClassHash,
+    constructorCalldata: callData,
+    addressSalt: pub_hash,
+  });
+  // 执行
+  await provider.waitForTransaction(transaction_hash);
+}
+
+export async function checkZKeyLogin(input: any) {
+  const INPUT = JSON.stringify(input);
+  let resData = null;
+  let proof = "";
+  try {
+    const res = await getProve(INPUT);
+    resData = JSONbig.parse(res);
+    console.log("resData", resData);
+    // let result = res.split("[").join("").split("]").join("");
+    // proof = result.split(',');
+  } catch (error) {
+    console.log("getProve error --->>> ", error);
+  }
+  if (resData) {
+    let { proof: resProof, witness } = resData;
+    const witnessData = witness.map((_) => _.toString(10));
+    console.log("witness", witnessData);
+    try {
+      proof = await getGarage({
+        input: JSON.stringify(witnessData),
+        proof: JSON.stringify(resProof),
+      });
+    } catch (error) {
+      console.log("getGarage error --->>> ", error);
+    }
+  }
+  return proof;
+}
+
+export async function walletResetPub({ account, provider, accountAddress, proof }) {
+  const calls = proof
+    .replace(/\s/g, "") // 去除空格和换行符
+    .slice(1, -1) // 去掉数组的方括号
+    .split(",") // 按逗号分割字符串
+    .map((num) => num.trim()); // 去掉每个数字周围的空白字符
+
+  const calls_data = {
+    contractAddress: accountAddress,
+    entrypoint: "zk_set_public_key",
+    calldata: CallData.compile({
+      prefix: "0x535441524b4e45545f434f4e54524143545f41444452455353",
+      account_hash: OZaccountClassHash,
+      calls,
+    }),
+  };
+
+  const result = await account.execute(calls_data);
+
+  // 获取当前时间
+  const startTime = new Date().getTime();
+  // 执行交易
+  await provider.waitForTransaction(result.transaction_hash, {
+    retryInterval: 1000,
+    successStates: [TransactionStatus.ACCEPTED_ON_L2],
+  });
+  // 获取执行结束时间
+  const endTime = new Date().getTime();
+  // 计算执行时间
+  const duration = endTime - startTime;
+
+  console.log(`执行时间为${duration}ms`);
+
+  return calls_data;
 }

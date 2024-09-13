@@ -35,3 +35,8 @@ export interface IContractAddress {
   jwtToken: string;
   exp: string;
 }
+
+export interface IFindClaimRes {
+  claim: [string[], number];
+  version: string;
+}

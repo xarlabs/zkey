@@ -1,4 +1,9 @@
 import http from "./api";
+import { ProveServiceClient } from "@/config/prove_service_grpc_web_pb.js";
+import { ProveRequest } from "@/config/prove_service_pb.js";
+import { GaragaServiceClient } from "@/config/garage_grpc_web_pb";
+import { GaragaRequest } from "@/config/garage_pb";
+import { IHttpResponse } from "./api.d";
 
 // 获取salt
 export const getSalt = (token: string) =>
@@ -30,4 +35,54 @@ export const checkWalletDeploy = (address: string) =>
     data: {
       address,
     },
+  });
+
+// 获取当前币的价格
+export const getWalletPrices = (tokenAddress: string) =>
+  http({
+    method: "GET",
+    // url: "https://api1.x.ar/dwgo/api/api/wallet/getWalletPrices",
+    url: `https://starknet.impulse.avnu.fi/v1/tokens/${tokenAddress}/prices/line`,
+    params: {
+      // tokenAddress,
+      resolution: "1H",
+    },
+  });
+
+export const getProve = (input: any) =>
+  new Promise((resolve, reject) => {
+    // http://localhost:8080 https://testapi.x.ar/zkcircuit/
+    const client = new ProveServiceClient("https://testapi.x.ar/witness/", null, null);
+    const request = new ProveRequest();
+    request.setProver("circom");
+    request.setTemp("zkLogin");
+    request.setInput(input);
+    request.setIsEncrypted(false);
+    request.setToCaicro(true);
+    client.prove(request, {}, (err, response) => {
+      if (err) {
+        console.log("getProve -> Error: " + err.message);
+        reject(err);
+      } else {
+        console.log("getProve -> success: " + response.getResponse());
+        resolve(response.getResponse());
+      }
+    });
+  });
+
+export const getGarage = ({ input, proof }) =>
+  new Promise((resolve, reject) => {
+    const client = new GaragaServiceClient("https://testapi.x.ar/new_zkcircuit/", null, null);
+    const request = new GaragaRequest();
+    request.setProof(proof);
+    request.setInput(input);
+    client.generateCalldata(request, {}, (err, response) => {
+      if (err) {
+        console.log("getGarage -> Error: " + err.message);
+        reject(err);
+      } else {
+        console.log("getGarage -> success: " + response.getCalldata());
+        resolve(response.getCalldata());
+      }
+    });
   });

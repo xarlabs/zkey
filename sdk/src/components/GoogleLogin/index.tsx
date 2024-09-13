@@ -20,12 +20,7 @@ const GoogleLoginButton = (props: IGoogleLoginProps) => {
   const userInfoNode: React.ReactNode = useMemo(() => {
     let node: React.ReactNode = null;
     if (typeof userContent === "function" || typeof userContent === "undefined") {
-      node = (
-        <div>
-          <img src={userInfo?.picture} alt='avatar' className='rounded-full w-8 h-8 ml-1 mr-6' />
-          Go to the wallet
-        </div>
-      );
+      node = <div>username : {userInfo?.name}</div>;
       if (typeof userContent === "function") {
         node = userContent(userInfo as IUserInfo);
       }
@@ -50,25 +45,21 @@ const GoogleLoginButton = (props: IGoogleLoginProps) => {
 
   return (
     <>
-      {nonce ? (
-        globalAccount && userInfo ? (
-          <> {userInfoNode}</>
-        ) : (
-          <GoogleOAuthProvider clientId={clientId}>
-            <GoogleLogin
-              onSuccess={(credentialResponse: CredentialResponse) =>
-                loginSuccess(credentialResponse)
-              }
-              logo_alignment='center'
-              shape='circle'
-              width='100%'
-              onError={() => {
-                console.log("Login Failed");
-              }}
-              nonce={nonce}
-            />
-          </GoogleOAuthProvider>
-        )
+      {globalAccount && userInfo ? (
+        <> {userInfoNode}</>
+      ) : nonce ? (
+        <GoogleOAuthProvider clientId={clientId}>
+          <GoogleLogin
+            onSuccess={(credentialResponse: CredentialResponse) => loginSuccess(credentialResponse)}
+            logo_alignment='center'
+            shape='circle'
+            width='100%'
+            onError={() => {
+              console.log("Login Failed");
+            }}
+            nonce={nonce}
+          />
+        </GoogleOAuthProvider>
       ) : (
         <> {loadingNode}</>
       )}

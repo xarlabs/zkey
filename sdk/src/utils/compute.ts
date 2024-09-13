@@ -7,7 +7,7 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { CIRCOM_BIGINT_N, CIRCOM_BIGINT_K } from "../config/const";
-
+import { IFindClaimRes } from "./type.d";
 const textEncoder = new TextEncoder();
 
 export function isBytes(a: any): boolean {
@@ -178,6 +178,25 @@ export const splitJWT = (jwt: any) => {
   return result;
 };
 
+export const shortNum = (bigNum: any) => {
+  const num = Number(bigNum);
+  if (num < 10000) {
+    return num;
+  } else if (num > 10000 && num < 1000000) {
+    return Math.floor(num / 1000) + "K";
+  } else {
+    return Math.floor(num / 1000000) + "M";
+  }
+};
+
+//qty: bigint, decimals: number     formatBalance:string
+export const formatBalance = (qty: any, decimals: any) => {
+  const balance = String("0").repeat(decimals) + qty.toString();
+  const rightCleaned = balance.slice(-decimals).replace(/(\d)0+$/gm, "$1");
+  const leftCleaned = BigInt(balance.slice(0, balance.length - decimals)).toString();
+  return leftCleaned + "." + rightCleaned;
+};
+
 export function base64ToAscii(base64String: any, length: number) {
   try {
     console.log("base64String", base64String);
@@ -247,11 +266,7 @@ export function asciiCodesToString(s: any) {
   return result;
 }
 
-export const findClaimLocation = (jwt: any, claim: any, max: any) => {
-  // const jwtBytes = toByteArray(jwt); //将 JWT 转换为字节数组
-
-  // generate the text at all possible possible version
-  // 尝试多种可能的 Base64 编码形式，包括清除等号的编码形式、带引号的编码形式、带冒号的编码形式
+export const findClaimLocation = (jwt: any, claim: any, max: any): IFindClaimRes => {
   let clean_test = btoa(claim).replaceAll("=", ""); //0
   let quote_at_0_index = btoa(`"${claim}`).replaceAll("=", ""); //1
   let colon_at_0_index = btoa(`:${claim}`).replaceAll("=", ""); //1
@@ -263,8 +278,7 @@ export const findClaimLocation = (jwt: any, claim: any, max: any) => {
   let comma_and_quote_at_end = btoa(`${claim},"`).replaceAll("=", ""); //0
   let colon_at_start_and_comma_at_end = btoa(`:${claim},`).replaceAll("=", ""); //1
   let colon_and_quote_at_start_quote_at_end = btoa(`:"${claim}"`).replaceAll("=", ""); //2
-  //0: 0,5,7,8   1: 1,2,6,9   2: 3,4,10
-  const versions = [
+  const versions: string[] = [
     clean_test,
     quote_at_0_index,
     colon_at_0_index,
@@ -279,22 +293,20 @@ export const findClaimLocation = (jwt: any, claim: any, max: any) => {
   ];
 
   let claimLocation;
-  let version: string | undefined = "";
+  let version: string = "";
 
   // 遍历这些编码形式，并在 JWT 中查找这些编码形式的存在位置
   for (let i = 0; i < versions.length; i++) {
     if (jwt.indexOf(versions[i]) !== -1) {
       claimLocation = jwt.indexOf(versions[i]);
-      version = versions[i];
+      version = versions[i] as string;
+
       break;
     }
   }
 
   // 将找到的位置的字节与声明的字节逐个比较，确保找到的确实是声明的位置
   let claimBytes: Uint8Array | number[] = toByteArray(version);
-  //   for (let i = claimLocation, j = 0; i < claimLocation + claimBytes.length; i++, j++) {
-  //     assert(jwtBytes[i] === claimBytes[j]);
-  //   }
 
   const len = claimBytes.length;
   if (len <= max) {

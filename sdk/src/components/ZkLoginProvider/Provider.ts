@@ -10,7 +10,7 @@ export function useZkPrivate() {
   const context = React.useContext(ZkPrivateContext);
 
   if (context === undefined) {
-    throw new Error("useZkState must be used within a ZkStateContext");
+    throw new Error("useZkPrivate must be used within a ZkPrivateContext");
   }
   return context as IZkPrivate;
 }
