@@ -83,7 +83,7 @@ export default function Login {
 | loginLoading    | `boolean`                                                                                                                                                  | 登录态                                                        |
 | loadingContent  | `string`                                                                                                                                                   | 登录状态提示文案用于提示用户                                  |
 
-### zkDispatcher (提供用户信息及钱包实例)
+### useZkDispatcher (提供用户信息及钱包实例)
 
 | Prop               |    Type    | Description            |
 | :----------------- | :--------: | :--------------------- |
@@ -113,3 +113,11 @@ export default function Login {
 | handleChangActiveGasAddress | `function` | 修改支付gas的货币地址 只支持ETH或STRK |
 | handleGetGasFree            | `function` | 触发查询gasFress                      |
 | handleTransfer              | `function` | 发起交易                              |
+
+## 维护者
+
+[@RickWang](https://github.com/dk264874293)。
+
+### 使用许可
+
+[MIT](LICENSE) © Richard Littauer

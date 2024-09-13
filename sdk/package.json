@@ -10,6 +10,14 @@
   },
   "author": "peiliang wang",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xarlabs/zkey/tree/main/sdk"
+  },
+  "files": [
+    "lib"
+  ],
+  "main": "li/index.js",
   "dependencies": {
     "@react-oauth/google": "^0.12.1",
     "big.js": "^6.2.2",
