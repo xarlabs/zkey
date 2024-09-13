@@ -13,7 +13,7 @@ zkey-react
 ## 流程图
 
 <p align="center">
-  <img alt="zkey-react" height="64" src="./demo/zKey-react.png">
+  <img alt="zkey-react"  src="./demo/zKey-react.jpg">
 </p>
 
 ## 安装
@@ -66,8 +66,8 @@ export default function Login {
 
 ### ZKeyLoginProvider
 
-| Prop                 |    Type    |        Description |
-| :------------------- | :--------: | -----------------: |
+| Prop                 |    Type    | Description        |
+| :------------------- | :--------: | :----------------- |
 | handleLogInCallback  | `function` | 用户登录后回调函数 |
 | handleLogOutCallback | `function` | 用户登出后回调函数 |
 
@@ -85,7 +85,31 @@ export default function Login {
 
 ### zkDispatcher (提供用户信息及钱包实例)
 
-| Prop               |    Type    |            Description |
-| :----------------- | :--------: | ---------------------: |
+| Prop               |    Type    | Description            |
+| :----------------- | :--------: | :--------------------- |
 | handleChangeDeploy | `function` | 用于切换账号deploy状态 |
-| handleUserLogOut   | `function` |                   登出 |
+| handleUserLogOut   | `function` | 登出                   |
+
+### useWalletState （钱包相关数据）
+
+| Prop              |                               Type                               | Description                                        |
+| :---------------- | :--------------------------------------------------------------: | :------------------------------------------------- | ----------------- |
+| walletLoading     |                            `boolean`                             | 钱包查询状态                                       |
+| currencyList      | `{prices:number;balance:number; sum:number;walletName:string}[]` | 货币列表(包含用户货币余额、贿赂、折合为美元的价值) |
+| overallBalance    |                             `number`                             | 用户货币的余额（折合为美元单位）                   |
+| activeWallet      |                            `Contract`                            | 当前用户选中的货币实例                             |
+| gasLoading        |                            `boolean`                             | 查询gas的loading                                   |
+| activeWalletGas   |                             `string                              | number`                                            | 当前交易的预估gas |
+| transferLoading   |                            `boolean`                             | 交易loading                                        |
+| transferStateText |                             `string`                             | 交易状态提示文本                                   |
+
+### useWalletDispatcher （操作钱包的事件）
+
+| Prop                        |    Type    | Description                           |
+| :-------------------------- | :--------: | :------------------------------------ |
+| handleChangeActiveContract  | `function` | 修改当前需要操作的货币地址            |
+| handleAddCurrency           | `function` | 添加需要查询的货币地址                |
+| handleWalletBalance         | `function` | 手动触发重新查询货币余额等信息        |
+| handleChangActiveGasAddress | `function` | 修改支付gas的货币地址 只支持ETH或STRK |
+| handleGetGasFree            | `function` | 触发查询gasFress                      |
+| handleTransfer              | `function` | 发起交易                              |
