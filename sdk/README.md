@@ -93,13 +93,13 @@ export default function Login {
 ### useWalletState （钱包相关数据）
 
 | Prop              |                               Type                               | Description                                        |
-| :---------------- | :--------------------------------------------------------------: | :------------------------------------------------- | ----------------- |
+| :---------------- | :--------------------------------------------------------------: | :------------------------------------------------- |
 | walletLoading     |                            `boolean`                             | 钱包查询状态                                       |
 | currencyList      | `{prices:number;balance:number; sum:number;walletName:string}[]` | 货币列表(包含用户货币余额、贿赂、折合为美元的价值) |
 | overallBalance    |                             `number`                             | 用户货币的余额（折合为美元单位）                   |
 | activeWallet      |                            `Contract`                            | 当前用户选中的货币实例                             |
 | gasLoading        |                            `boolean`                             | 查询gas的loading                                   |
-| activeWalletGas   |                             `string                              | number`                                            | 当前交易的预估gas |
+| activeWalletGas   |                         `string  number`                         | 当前交易的预估gas                                  |
 | transferLoading   |                            `boolean`                             | 交易loading                                        |
 | transferStateText |                             `string`                             | 交易状态提示文本                                   |
 
