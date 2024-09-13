@@ -66,10 +66,10 @@ export default function Login {
 
 ### ZKeyLoginProvider
 
-| Prop                 |    Type    | Description        |
-| :------------------- | :--------: | :----------------- |
-| handleLogInCallback  | `function` | 用户登录后回调函数 |
-| handleLogOutCallback | `function` | 用户登出后回调函数 |
+| Prop                 |          Type          | Description                          |
+| :------------------- | :--------------------: | :----------------------------------- |
+| handleLogInCallback  | `（userInfo） => void` | 用户登录后回调函数(数据参考userInfo) |
+| handleLogOutCallback |       `function`       | 用户登出后回调函数                   |
 
 ### useZkState (提供用户信息及钱包实例)
 
@@ -105,18 +105,18 @@ export default function Login {
 
 ### useWalletDispatcher （操作钱包的事件）
 
-| Prop                        |    Type    | Description                           |
-| :-------------------------- | :--------: | :------------------------------------ |
-| handleChangeActiveContract  | `function` | 修改当前需要操作的货币地址            |
-| handleAddCurrency           | `function` | 添加需要查询的货币地址                |
-| handleWalletBalance         | `function` | 手动触发重新查询货币余额等信息        |
-| handleChangActiveGasAddress | `function` | 修改支付gas的货币地址 只支持ETH或STRK |
-| handleGetGasFree            | `function` | 触发查询gasFress                      |
-| handleTransfer              | `function` | 发起交易                              |
+| Prop                        |                        Type                         | Description                           |
+| :-------------------------- | :-------------------------------------------------: | :------------------------------------ |
+| handleChangeActiveContract  |             `(address:string) => void`              | 修改当前需要操作的货币地址            |
+| handleAddCurrency           |          `(address:string) => promise<T>`           | 添加需要查询的货币地址                |
+| handleWalletBalance         |                 `() => Promise<T>`                  | 手动触发重新查询货币余额等信息        |
+| handleChangActiveGasAddress |          `(address:string) => promise<T>`           | 修改支付gas的货币地址 只支持ETH或STRK |
+| handleGetGasFree            | `(amount: number, toAddress: string) => promise<T>` | 触发查询gasFress                      |
+| handleTransfer              | `(amount: number, toAddress: string) => promise<T>` | 发起交易                              |
 
 ## 维护者
 
-[@RickWang](https://github.com/dk264874293)。
+[@peiliang wang](https://github.com/dk264874293)。
 
 ### 使用许可
 

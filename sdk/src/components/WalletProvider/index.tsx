@@ -28,7 +28,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
 
   const [currencyList, setCurrencyList] = useState([]);
 
-  const [activeContract, handleAddActiveContract] = useState<string>("");
+  const [activeContract, handleChangeActiveContract] = useState<string>("");
 
   const [activeGasAddress, handleChangActiveGasAddress] = useState<string>("");
 
@@ -187,8 +187,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
     },
     [transferAccount, walletDetail],
   );
-  const handleTransfer = async (values) => {
-    const { toAddress, amount } = values;
+  const handleTransfer = async (amount: number, toAddress: string) => {
     // 计算预估的总费用是否超过余额
     // 支付gas的账户是否为前钱执行转账的钱包
     const isActiveWalletGas = activeWallet.address === activeGasAddress.address;
@@ -352,7 +351,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
       console.log("queryContractListRes", queryContractListRes);
       handleChangActiveGasAddress(initGasAddress);
       if (contractList.length > 0) {
-        handleAddActiveContract(contractList[0].address);
+        handleChangeActiveContract(contractList[0].address);
       }
       setCurrencyList(contractList);
       setWalletLoading(false);
@@ -389,7 +388,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
 
   const walletDispatcher = useMemo(() => {
     return {
-      handleAddActiveContract,
+      handleChangeActiveContract,
       handleAddCurrency,
       handleWalletBalance,
       handleChangActiveGasAddress,
@@ -397,7 +396,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
       handleTransfer,
     };
   }, [
-    handleAddActiveContract,
+    handleChangeActiveContract,
     handleAddCurrency,
     handleWalletBalance,
     handleChangActiveGasAddress,
