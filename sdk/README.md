@@ -19,7 +19,7 @@ zkey-react
 ## 安装
 
 ```bash
-yarn install zkey-react
+yarn add zkey-react
 ```
 
 Or
@@ -83,7 +83,7 @@ export default function Login {
 | loginLoading    | `boolean`                                                                                                                                                  | 登录态                                                        |
 | loadingContent  | `string`                                                                                                                                                   | 登录状态提示文案用于提示用户                                  |
 
-### useZkDispatcher (提供用户信息及钱包实例)
+### useZkDispatcher (修改状态及登出的方法)
 
 | Prop               |           Type            | Description            |
 | :----------------- | :-----------------------: | :--------------------- |
@@ -103,7 +103,7 @@ export default function Login {
 | transferLoading   |                            `boolean`                             | 交易loading                                        |
 | transferStateText |                             `string`                             | 交易状态提示文本                                   |
 
-### useWalletDispatcher （操作钱包的事件）
+### useWalletDispatcher （操作钱包的方法）
 
 | Prop                        |                        Type                         | Description                           |
 | :-------------------------- | :-------------------------------------------------: | :------------------------------------ |
@@ -120,4 +120,4 @@ export default function Login {
 
 ### 使用许可
 
-[MIT](LICENSE) © Richard Littauer
+[MIT](LICENSE)
