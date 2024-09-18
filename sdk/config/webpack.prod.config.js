@@ -7,10 +7,16 @@ const prodConfig = {
   mode: "production", // 生产模式
   entry: path.join(__dirname, "../src/index.tsx"),
   output: {
-    path: path.join(__dirname, "../lib/"),
+    path: path.join(__dirname, "lib"),
+    clean: true,
     filename: "index.js",
     libraryTarget: "umd", // 采用通用模块定义
     libraryExport: "default", // 兼容 ES6 Module、CommonJS 和 AMD 模块规范
+    library: {
+      name: "zkey-react",
+      type: "umd",
+      export: "default",
+    },
   },
   module: {
     rules: [
@@ -57,25 +63,28 @@ const prodConfig = {
     }),
   ],
   externals: {
+    react: "react",
+    "react-dom": "react-dom",
+    starknet: "starknet",
     // 定义外部依赖，避免把react和react-dom打包进去
-    react: {
-      root: "React",
-      commonjs2: "react",
-      commonjs: "react",
-      amd: "react",
-    },
-    "react-dom": {
-      root: "ReactDOM",
-      commonjs2: "react-dom",
-      commonjs: "react-dom",
-      amd: "react-dom",
-    },
-    starknet: {
-      root: "starknet",
-      commonjs2: "starknet",
-      commonjs: "starknet",
-      amd: "starknet",
-    },
+    // react: {
+    //   root: "React",
+    //   commonjs2: "react",
+    //   commonjs: "react",
+    //   amd: "react",
+    // },
+    // "react-dom": {
+    //   root: "ReactDOM",
+    //   commonjs2: "react-dom",
+    //   commonjs: "react-dom",
+    //   amd: "react-dom",
+    // },
+    // starknet: {
+    //   root: "starknet",
+    //   commonjs2: "starknet",
+    //   commonjs: "starknet",
+    //   amd: "starknet",
+    // },
   },
 };
 module.exports = merge(prodConfig, baseConfig);

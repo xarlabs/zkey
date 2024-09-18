@@ -17,7 +17,7 @@ import { handleLocalStorage, StorageEnum } from "@/utils/storage";
 import { nodeUrl } from "../../config/walletConfig";
 import { generateRandomness, generateNonce, generateAccountAddress } from "@/utils/wallet";
 import { getJWTData, findJwtClaim, createInputs } from "@/utils/proof";
-import walletAbi from "@/config/walletAbi.json";
+import walletAbi from "@/config/walletAbi";
 import { getSalt } from "@/http";
 
 const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {

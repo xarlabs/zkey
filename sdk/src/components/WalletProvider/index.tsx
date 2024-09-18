@@ -9,10 +9,10 @@ import { handleLocalStorage, StorageEnum } from "@/utils/storage";
 import { u256toWeb, setWalletDeploy, checkZKeyLogin, walletResetPub } from "@/utils/wallet";
 import { SEPOLIA_DEF_CONTRACT_ADDRESS, GAS_ADDRESS } from "@/config/walletConfig";
 import { IWalletProviderProps } from "./type";
-import tokenApiJson from "@/config/tokenApi.json";
+import tokenApiJson from "@/config/tokenApi";
 import { WALLET_V3_ADDRESS, OZaccountClassHash } from "@/config/walletConfig";
 import { getWalletPrices, checkWalletDeploy } from "@/http";
-import walletAbi from "@/config/walletAbi.json";
+import walletAbi from "@/config/walletAbi";
 
 const WalletProvider = (props: IWalletProviderProps) => {
   const { children, currencyAddress } = props;

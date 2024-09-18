@@ -1,12 +1,12 @@
 {
   "name": "zkey-react",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
     "dev": "webpack-dev-server --config config/webpack.dev.config.js",
-    "build": "webpack --config config/webpack.prod.config.js"
+    "build": "webpack --config config/webpack.prod.config.js",
+    "compile": "npx babel src --out-dir lib   --extensions .ts,.js,.tsx,.jsx,.cjs,.mjs   --presets=@babel/preset-typescript,@babel/preset-env,@babel/preset-react"
   },
   "author": "peiliang wang",
   "license": "MIT",
@@ -17,7 +17,7 @@
   "files": [
     "lib"
   ],
-  "main": "li/index.js",
+  "main": "lib/index.js",
   "dependencies": {
     "@react-oauth/google": "^0.12.1",
     "big.js": "^6.2.2",
