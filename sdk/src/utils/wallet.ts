@@ -1,6 +1,7 @@
 import { CallData, hash, Account, cairo, uint256, TransactionStatus } from "starknet";
 import JSONbig from "json-bigint";
-import { buildEddsa, buildPoseidon } from "circomlibjs";
+// import { buildEddsa, buildPoseidon } from "circomlibjs";
+import { getSubHash } from "@/http";
 
 import {
   toBigIntBE,
@@ -39,15 +40,15 @@ export function generateRandomness(length = 16) {
  * @returns {string} 生成的 Nonce 的字符串表示，它是通过将 Nonce 转换为 BigInt，然后转换为字符串得到的
  * @throws 如果浏览器不支持 WebCrypto API 或者没有可用的随机数生成器，将抛出错误信息 "crypto.getRandomValues must be defined"
  */
-export async function generateNonce(publicKey: string, randomness: string, exp: string) {
-  const eddsa = await buildEddsa();
-  const F = eddsa.babyJub.F;
-  const poseidon = await buildPoseidon();
-  const p = BigInt(publicKey);
-  const nonce = poseidon([p.toString(), randomness, exp]);
-  const data = F.toObject(nonce).toString();
-  return data;
-}
+// export async function generateNonce(publicKey: string, randomness: string, exp: string) {
+//   const eddsa = await buildEddsa();
+//   const F = eddsa.babyJub.F;
+//   const poseidon = await buildPoseidon();
+//   const p = BigInt(publicKey);
+//   const nonce = poseidon([p.toString(), randomness, exp]);
+//   const data = F.toObject(nonce).toString();
+//   return data;
+// }
 
 export async function getContractAddress({
   provider,
@@ -81,15 +82,15 @@ export async function getContractAddress({
 
     let subascii = asciiCodesToString(data.sub);
 
-    let poseidon = await buildPoseidon();
-    let eddsa = await buildEddsa();
-    const F = eddsa.babyJub.F;
-    let sub_hash = F.toObject(poseidon([subascii, salt]));
-
+    // let poseidon = await buildPoseidon();
+    // let eddsa = await buildEddsa();
+    // const F = eddsa.babyJub.F;
+    // let sub_hash = F.toObject(poseidon([subascii, salt]));
+    const subRes = await getSubHash(subascii, salt);
     let param_data = {
       iss1: cairo.uint256(iss_result.firstPartAscii),
       iss2: cairo.uint256(iss_result.secondPartAscii),
-      sub: cairo.uint256(sub_hash),
+      sub: cairo.uint256(subRes.code === 0 ? subRes.data : ""),
     };
 
     let param = CallData.compile(param_data);

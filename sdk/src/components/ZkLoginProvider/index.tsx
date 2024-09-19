@@ -15,10 +15,10 @@ export { useZkState, useZkDispatcher, useZkContext } from "./Provider";
 import { IZkLoginProviderProps, IUserInfo, IWalletConfig, IWalletDetail, IZkState } from "./types";
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
 import { nodeUrl } from "../../config/walletConfig";
-import { generateRandomness, generateNonce, generateAccountAddress } from "@/utils/wallet";
+import { generateRandomness, generateAccountAddress } from "@/utils/wallet";
 import { getJWTData, findJwtClaim, createInputs } from "@/utils/proof";
 import walletAbi from "@/config/walletAbi";
-import { getSalt } from "@/http";
+import { getSalt, generateNonce } from "@/http";
 
 const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   const { children, handleLogOutCallback, handleLogInCallback } = props;
@@ -155,13 +155,14 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       // 过期时间24小时
       const exp = Math.trunc((dateNow + 1000 * 60 * 60 * 24) / 1000).toString();
       // 生成nonce
-      const nonce = await generateNonce(publicKey, randomness, exp);
+
+      const nonceRes = await generateNonce(publicKey, randomness, exp);
       setWalletConfig({
         privateKey,
         publicKey,
         randomness,
         exp,
-        nonce,
+        nonce: nonceRes.code === 0 ? nonceRes.data : "",
       });
     };
     const walletInit = async () => {

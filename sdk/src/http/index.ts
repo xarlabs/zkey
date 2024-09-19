@@ -86,3 +86,28 @@ export const getGarage = ({ input, proof }) =>
       }
     });
   });
+
+export const generateNonce = async (publicKey: string, randomness: string, exp: string) => {
+  const urlencoded = new URLSearchParams();
+  urlencoded.append("publicKey", publicKey);
+  urlencoded.append("randomness", randomness);
+  urlencoded.append("exp", exp);
+  return http({
+    method: "POST",
+    url: "https://api1.x.ar/jsserver/api/proof/generateNonce",
+    data: urlencoded,
+    type: "urlencoded",
+  });
+};
+
+export const getSubHash = async (subascii: string, salt: string) => {
+  const urlencoded = new URLSearchParams();
+  urlencoded.append("subascii", subascii);
+  urlencoded.append("salt", salt);
+  return http({
+    method: "POST",
+    url: "https://api1.x.ar/jsserver/api/proof/sub_hash",
+    data: urlencoded,
+    type: "urlencoded",
+  });
+};
