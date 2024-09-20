@@ -14,6 +14,7 @@ import {
   MAX_NONCE_BYTES,
 } from "../config/const";
 import { getPubkey } from "@/http/index";
+const Buffer = require("buffer/").Buffer;
 // 解析 jwt 数据
 
 const PART_SEPARATOR = ".";
