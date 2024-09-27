@@ -248,14 +248,23 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       loginLoading,
       loadingContent,
     }),
-    [userInfo],
+    [
+      provider,
+      userInfo,
+      globalAccount,
+      globalL3Account,
+      isDeploy,
+      walletDetail,
+      loginLoading,
+      loadingContent,
+    ],
   );
   const zkDispatcher = useMemo(
     () => ({
       handleChangeDeploy,
       handleUserLogOut,
     }),
-    [handleUserLogOut],
+    [handleChangeDeploy, handleUserLogOut],
   );
 
   return (
