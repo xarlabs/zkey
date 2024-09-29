@@ -24,6 +24,8 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   const { children, handleLogOutCallback, handleLogInCallback } = props;
   // rpc 实例
   const provider = useRef(new RpcProvider({ nodeUrl }));
+  // 全局网络状态
+  const [globalNetwork, setGlobalNetwork] = useState("Sepolia");
   // 登录loading
   const [loginLoading, setLoginLoading] = useState<boolean>(false);
   // 登录阶段文本
@@ -89,9 +91,6 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         salt,
         jwtClaim,
       });
-
-      console.log("OZcontractAddress", OZcontractAddress);
-
       // L3 实例
       const userL3Account = new Account(
         provider.current,
@@ -115,7 +114,6 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         isDeploy,
       };
 
-      console.log("jwtData", jwtData);
       const { name, picture, email, given_name, family_name } = jwtData;
       const userInfo = { name, picture, email, given_name, family_name };
 
@@ -239,6 +237,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
 
   const zkState: IZkState = useMemo(
     () => ({
+      globalNetwork,
       provider: provider.current,
       userInfo,
       globalAccount,
@@ -249,6 +248,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       loadingContent,
     }),
     [
+      globalNetwork,
       provider,
       userInfo,
       globalAccount,

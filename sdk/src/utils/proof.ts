@@ -115,15 +115,12 @@ export const createInputs = async (
   const jwt_padded_bytes = jwtPaddedLen.toString();
   const jwt = await Uint8ArrayToCharArray(jwtPadded);
 
-  // const expClaim = findClaimLocation(data.jwt, data.exp, MAX_EXP_BYTES);
-  console.log("request start");
-
   const response = await getPubkey(data.jwt);
 
   console.log("request end --->", response);
 
-  const rsaPubkey = response.status === 200 ? toCircomBigIntBytes(BigInt(response.data)) : "";
-
+  const rsaPubkey = response.code === 0 ? toCircomBigIntBytes(BigInt(response.data)) : "";
+  console.log("jwt", jwt);
   const inputs = {
     jwt_segments: splitJWT(jwt),
     jwt_padded_bytes,

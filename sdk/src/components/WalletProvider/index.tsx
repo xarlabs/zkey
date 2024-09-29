@@ -32,9 +32,11 @@ const WalletProvider = (props: IWalletProviderProps) => {
 
   const [activeGasAddress, handleChangActiveGasAddress] = useState<string>("");
 
-  const [gasLoading, setGasLoading] = useState(false);
+  const [gasLoading, setGasLoading] = useState<boolean>(false);
 
-  const [gasFree, setGasFree] = useState("-");
+  const [gasFree, setGasFree] = useState<string | number>("-");
+
+  const [amount, setAmount] = useState<number>(0);
 
   const activeWallet = useMemo(() => {
     const findIndex = currencyList.findIndex((item) => item.address === activeContract);
@@ -49,7 +51,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
     return currencyList.find((item) => item.address === activeGasAddress?.address);
   }, [currencyList, activeGasAddress?.balance]);
 
-  const activeWalletGas = useMemo(() => {
+  const activeGasPrice = useMemo(() => {
     if (typeof gasFree === "number" && gasFree > 0) {
       const min = new Big(0.001);
       const num = new Big(gasFree).times(activeGasBalance?.prices);
@@ -57,6 +59,16 @@ const WalletProvider = (props: IWalletProviderProps) => {
     }
     return "-";
   }, [gasFree, activeGasBalance]);
+
+  const totalPrice = useMemo(() => {
+    if (amount && activeGasPrice) {
+      if (activeGasPrice === "-") return "-";
+      let balance = new Big(amount).times(new Big(activeWallet?.prices));
+      balance = balance.plus(new Big(activeGasPrice));
+      return balance.toString();
+    }
+    return "-";
+  }, [amount, activeWallet?.prices, activeGasPrice]);
 
   const overallBalance = useMemo(() => {
     let overallBalance = new Big(0);
@@ -144,7 +156,11 @@ const WalletProvider = (props: IWalletProviderProps) => {
   // 查询gasfree
   const handleGetGasFree = useCallback(
     async (amount: number, toAddress: string) => {
-      console.log("handGetGas", transferAccount);
+      setAmount(amount);
+      if (!amount) {
+        setGasFree("-");
+        return;
+      }
       setGasLoading(true);
       const { callData } = walletDetail;
       if (!isDeploy) {
@@ -161,7 +177,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
             setGasFree(u256toWeb((estimatedFee1 * 12n) / 10n));
             setGasLoading(false);
           } catch (error) {
-            console.log("estimatedFee1 error --->", error);
             setGasFree("-");
             setGasLoading(false);
           }
@@ -177,7 +192,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
             amount: cairo.uint256(amount * 10 ** 18),
           }),
         });
-        console.log("estimatedFee1", estimatedFee1);
         setGasFree(u256toWeb((estimatedFee1 * 11n) / 10n));
       } catch (error) {
         console.log("getGasFree error --->", error);
@@ -185,19 +199,19 @@ const WalletProvider = (props: IWalletProviderProps) => {
       }
       setGasLoading(false);
     },
-    [transferAccount, walletDetail],
+    [isDeploy, transferAccount, walletDetail, activeWallet],
   );
   const handleTransfer = async (amount: number, toAddress: string) => {
     // 计算预估的总费用是否超过余额
     // 支付gas的账户是否为前钱执行转账的钱包
-    const isActiveWalletGas = activeWallet.address === activeGasAddress.address;
+    const isactiveGasPrice = activeWallet.address === activeGasAddress.address;
     // 钱包余额
     const TotalNum = new Big(activeGasBalance.balance);
     // 需要支付的
-    const TotalGasBalance = isActiveWalletGas
+    const TotalGasBalance = isactiveGasPrice
       ? new Big(amount).plus(new Big(gasFree))
       : new Big(gasFree);
-    console.log("TotalGasBalance", TotalGasBalance.toString());
+    console.log("TotalGasBalance", TotalGasBalance, TotalNum, TotalNum.gte(TotalGasBalance));
     if (!TotalNum.gte(TotalGasBalance)) {
       throw new Error("Insufficient funds to pay fee");
     }
@@ -211,14 +225,12 @@ const WalletProvider = (props: IWalletProviderProps) => {
       if (!checkDeploy) {
         setTransferStateText("Deploying Account");
         try {
-          console.log("deploy --> start");
           await setWalletDeploy({
             callData,
             pub_hash,
             provider: provider.current,
             account: transferAccount,
           });
-          console.log("deploy --> success");
           const res = await checkWalletDeploy(address);
           const isDeploy = res?.code === 0;
           handleChangeDeploy(isDeploy);
@@ -228,7 +240,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
             JSON.stringify({ ...walletDetail, isDeploy }),
           );
         } catch (error) {
-          console.log("deploy -->error", error);
           setTransferStateText("");
           setTransferLoading(false);
           if (error?.message?.indexOf("exceeds balance")) {
@@ -265,6 +276,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
           } catch (error) {
             setTransferStateText("");
             setTransferLoading(false);
+            console.log("error", error);
             if (error?.message?.indexOf("exceeds balance")) {
               throw new Error("Insufficient funds to pay fee");
             } else {
@@ -294,7 +306,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
         handleWalletBalance(activeWallet?.address);
         setTransferLoading(false);
       } catch (error) {
-        console.log("linkContract error --->", error);
         setTransferLoading(false);
         throw new Error("Transfer failure Please check the entered information");
       }
@@ -306,7 +317,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
 
   useEffect(() => {
     const getAccountBalance = async () => {
-      console.log("getAccountBalance --> start");
       setWalletLoading(true);
       let addressList = currencyAddress || SEPOLIA_DEF_CONTRACT_ADDRESS;
 
@@ -348,7 +358,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
         const filterAddress = contractList.filter((item) => item.address === GAS_ADDRESS[0]);
         initGasAddress = filterAddress[0];
       }
-      console.log("queryContractListRes", queryContractListRes);
       handleChangActiveGasAddress(initGasAddress);
       if (contractList.length > 0) {
         handleChangeActiveContract(contractList[0].address);
@@ -370,7 +379,9 @@ const WalletProvider = (props: IWalletProviderProps) => {
       activeWallet,
       activeGasAddress,
       gasLoading,
-      activeWalletGas,
+      activeWalletGas: gasFree,
+      activeGasPrice,
+      totalPrice,
       transferLoading,
       transferStateText,
     };
@@ -381,7 +392,9 @@ const WalletProvider = (props: IWalletProviderProps) => {
     activeWallet,
     activeGasAddress,
     gasLoading,
-    activeWalletGas,
+    gasFree,
+    activeGasPrice,
+    totalPrice,
     transferLoading,
     transferStateText,
   ]);

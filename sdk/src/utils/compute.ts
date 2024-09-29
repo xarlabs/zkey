@@ -157,12 +157,7 @@ export const sha256Pad = async (
  */
 export const Uint8ArrayToCharArray = (a: Uint8Array): string[] => {
   // 确保每个元素都在 ASCII 范围内
-  return Array.from(a).map((x) => {
-    // if (x > 127) {
-    //   throw new Error("Element is not a valid ASCII character");
-    // }
-    return String.fromCharCode(x);
-  });
+  return Array.from(a).map((x) => x.toString());
 };
 
 export const splitJWT = (jwt: any) => {
