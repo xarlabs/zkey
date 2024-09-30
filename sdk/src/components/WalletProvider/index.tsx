@@ -211,7 +211,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
     const TotalGasBalance = isactiveGasPrice
       ? new Big(amount).plus(new Big(gasFree))
       : new Big(gasFree);
-    console.log("TotalGasBalance", TotalGasBalance, TotalNum, TotalNum.gte(TotalGasBalance));
+
     if (!TotalNum.gte(TotalGasBalance)) {
       throw new Error("Insufficient funds to pay fee");
     }
@@ -228,7 +228,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
           await setWalletDeploy({
             callData,
             pub_hash,
-            provider: provider.current,
+            provider: provider,
             account: transferAccount,
           });
           const res = await checkWalletDeploy(address);
@@ -251,7 +251,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
       }
     }
     try {
-      const acountObj = new Contract(walletAbi.abi, address, provider.current);
+      const acountObj = new Contract(walletAbi.abi, address, provider);
       const bal1 = await acountObj.get_public_key();
 
       // 如果公钥不匹配则重设公司钥对
@@ -260,16 +260,14 @@ const WalletProvider = (props: IWalletProviderProps) => {
         // 判断是否过期
         const isNotExpired = exp && Number(exp) - dateNow > 30;
         if (isNotExpired) {
-          console.log("checkZKeyLogin --> start", input);
           setTransferStateText("Getting Zero Knowledge Proof");
           const proof = await checkZKeyLogin(input);
-          console.log("proof -->", proof);
           setTransferStateText("Setting Session Key");
-          console.log("reset_pub --> start");
+
           try {
             await walletResetPub({
               account: transferAccount,
-              provider: provider.current,
+              provider: provider,
               accountAddress: address,
               proof,
             });
@@ -301,11 +299,12 @@ const WalletProvider = (props: IWalletProviderProps) => {
           BigInt(amount * 10 ** 18).toString(),
         );
         // 执行
-        await provider.current.waitForTransaction(respTransfer.transaction_hash);
+        await provider.waitForTransaction(respTransfer.transaction_hash);
 
         handleWalletBalance(activeWallet?.address);
         setTransferLoading(false);
       } catch (error) {
+        console.log("error -->", error);
         setTransferLoading(false);
         throw new Error("Transfer failure Please check the entered information");
       }
