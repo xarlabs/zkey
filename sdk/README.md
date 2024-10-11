@@ -1,6 +1,6 @@
-# zkey-react
+# zKey-react
 
-The zkey-react component is based on the React framework and enables users to quickly create and log in to a Web3 wallet using third-party accounts such as Google or Facebook.
+The zKey-react component is based on the React framework and enables users to quickly create and log in to a Web3 wallet using third-party accounts such as Google or Facebook.
 
 ## Features
 
