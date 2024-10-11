@@ -102,7 +102,7 @@ export default function Login {
 | transferLoading   |                            `boolean`                             | Loading state for the transfer process                                      |
 | transferStateText |                             `string`                             | Transaction status message                                  |
 
-### useWalletDispatcher （操作钱包的方法）
+### useWalletDispatcher （Wallet Operations）
 
 | Prop                        |                        Type                         | Description                           |
 | :-------------------------- | :-------------------------------------------------: | :------------------------------------ |
