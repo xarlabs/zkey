@@ -1,22 +1,21 @@
 # zkey-react
 
-zkey-react
-是基于react框架来使用户可以快速的通过第三方账号（如：google，facebook）来创建并登录web3钱包的组件。
+The zkey-react component is based on the React framework and enables users to quickly create and log in to a Web3 wallet using third-party accounts such as Google or Facebook.
 
-## 特性
+## Features
 
-- 提供完善的web3钱包功能
-- 无需web3相关的知识即可轻松使用
-- 支持React、Next框架简单易用
-- 高扩展性，提供原型实例方便二次开发
+- Offers comprehensive Web3 wallet functionality
+- Easy to use without requiring Web3 knowledge
+- Simple and compatible with React and Next frameworks
+- Highly extensible, with prototype instances available for further development
 
-## 流程图
+## Flowchart
 
 <p align="center">
   <img alt="zkey-react"  src="./demo/zKey-react.jpg">
 </p>
 
-## 安装
+## Install
 
 ```bash
 yarn add zkey-react
@@ -28,9 +27,9 @@ Or
 npm install zkey-react
 ```
 
-## 使用
+## How to Run
 
-### 提供全局provider来管理应用的登录态及钱包实例，务必在应用最外层引入
+### The SDK provides a global provider to manage the application's login state and wallet instance. Make sure to include it at the outermost level of the app.
 
 ```jsx
 import { ZKeyLoginProvider, WalletProvider } from "zkey-react";
@@ -46,10 +45,10 @@ export default App({ children }){
 }
 ```
 
-### 登录
+### Log in
 
-在您希望的页面引入并传入该应用clientId
-
+Import it into the desired page and pass the application's clientId.
+ 
 ```jsx
 import { GoogleLoginButton } from "zkey-react"
 export default function Login {
@@ -68,56 +67,56 @@ export default function Login {
 
 | Prop                 |          Type          | Description                          |
 | :------------------- | :--------------------: | :----------------------------------- |
-| handleLogInCallback  | `（userInfo） => void` | 用户登录后回调函数(数据参考userInfo) |
-| handleLogOutCallback |       `function`       | 用户登出后回调函数                   |
+| handleLogInCallback  | `（userInfo） => void` | Callback function after user login (data reference: userInfo)|
+| handleLogOutCallback |       `function`       | Callback function after user logout                  |
 
-### useZkState (提供用户信息及钱包实例)
+### useZkState (User information and wallet instance)
 
 | Prop            | Type                                                                                                                                                       | Description                                                   |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| provider        | `RpcProvider`                                                                                                                                              | 钱包rpc实例（用于二次开发及与内部组件交互）                   |
-| userInfo        | `email:string; family_name:string; given_name:string;name: string;picture: string;`                                                                        | 用户信息                                                      |
-| globalAccount   | `AccountInterface`                                                                                                                                         | 用户钱包实例（用于二次开发及与内部组件交互）                  |
-| globalL3Account | `AccountInterface`                                                                                                                                         | 用户钱包实例L3使用STRK结算gas（用于二次开发及与内部组件交互） |
-| walletDetail    | `address: string;callData: string[];exp: string;input: any;isDeploy: boolean;privateKey: string;pub_hash: string;publicKey: string;salt: string;sub: any;` | 钱包相关的配置参数 （用于二次开发及与内部组件交互）           |
-| loginLoading    | `boolean`                                                                                                                                                  | 登录态                                                        |
-| loadingContent  | `string`                                                                                                                                                   | 登录状态提示文案用于提示用户                                  |
+| provider        | `RpcProvider`                                                                                                                                              | Wallet RPC instance (for further development and interaction with internal components)                   |
+| userInfo        | `email:string; family_name:string; given_name:string;name: string;picture: string;`                                                                        | User information                                                      |
+| globalAccount   | `AccountInterface`                                                                                                                                         | User wallet instance (for further development and interaction with internal components)                   |
+| globalL3Account | `AccountInterface`                                                                                                                                         | Wallet instance for L3 version transactions, which can use STRK for gas settlement |
+| walletDetail    | `address: string;callData: string[];exp: string;input: any;isDeploy: boolean;privateKey: string;pub_hash: string;publicKey: string;salt: string;sub: any;` | Wallet-related configuration parameters(for further development and interaction with internal components)            |
+| loginLoading    | `boolean`                                                                                                                                                  | Login status                                                        |
+| loadingContent  | `string`                                                                                                                                                   | Login status message used to notify the user                               |
 
-### useZkDispatcher (修改状态及登出的方法)
+### useZkDispatcher (Methods to change state and log out)
 
 | Prop               |           Type            | Description            |
 | :----------------- | :-----------------------: | :--------------------- |
-| handleChangeDeploy | `(state:boolean) => void` | 用于切换账号deploy状态 |
-| handleUserLogOut   |        `function`         | 登出                   |
+| handleChangeDeploy | `(state:boolean) => void` | Used to switch account deployment status |
+| handleUserLogOut   |        `function`         | Log out                |
 
-### useWalletState （钱包相关数据）
+### useWalletState （Wallet-related data）
 
 | Prop              |                               Type                               | Description                                        |
 | :---------------- | :--------------------------------------------------------------: | :------------------------------------------------- |
-| walletLoading     |                            `boolean`                             | 钱包查询状态                                       |
-| currencyList      | `{prices:number;balance:number; sum:number;walletName:string}[]` | 货币列表(包含用户货币余额、汇率、折合为美元的价值) |
-| overallBalance    |                             `number`                             | 用户货币的余额（折合为美元单位）                   |
-| activeWallet      |                            `Contract`                            | 当前用户选中的货币实例                             |
-| gasLoading        |                            `boolean`                             | 查询gas的loading                                   |
-| activeWalletGas   |                         `string  number`                         | 当前交易的预估gas                                  |
-| transferLoading   |                            `boolean`                             | 交易loading                                        |
-| transferStateText |                             `string`                             | 交易状态提示文本                                   |
+| walletLoading     |                            `boolean`                             | Wallet status query                                      |
+| currencyList      | `{prices:number;balance:number; sum:number;walletName:string}[]` | List of currencies (includes user balances, exchange rates, and USD equivalent value) |
+| overallBalance    |                             `number`                             | User's total currency balance (in USD equivalent)                  |
+| activeWallet      |                            `Contract`                            | The currently selected currency instance                           |
+| gasLoading        |                            `boolean`                             | Loading state for gas query                                 |
+| activeWalletGas   |                         `string  number`                         | Estimated gas for the current transaction                                |
+| transferLoading   |                            `boolean`                             | Loading state for the transfer process                                      |
+| transferStateText |                             `string`                             | Transaction status message                                  |
 
 ### useWalletDispatcher （操作钱包的方法）
 
 | Prop                        |                        Type                         | Description                           |
 | :-------------------------- | :-------------------------------------------------: | :------------------------------------ |
-| handleChangeActiveContract  |             `(address:string) => void`              | 修改当前需要操作的货币地址            |
-| handleAddCurrency           |          `(address:string) => promise<T>`           | 添加需要查询的货币地址                |
-| handleWalletBalance         |                 `() => Promise<T>`                  | 手动触发重新查询货币余额等信息        |
-| handleChangActiveGasAddress |          `(address:string) => promise<T>`           | 修改支付gas的货币地址 只支持ETH或STRK |
-| handleGetGasFree            | `(amount: number, toAddress: string) => promise<T>` | 触发查询gasFress                      |
-| handleTransfer              | `(amount: number, toAddress: string) => promise<T>` | 发起交易                              |
+| handleChangeActiveContract  |             `(address:string) => void`              | Change the address of the currency to operate on            |
+| handleAddCurrency           |          `(address:string) => promise<T>`           | Add the currency address to query             |
+| handleWalletBalance         |                 `() => Promise<T>`                  | Manually trigger a refresh of the currency balance and other information        |
+| handleChangActiveGasAddress |          `(address:string) => promise<T>`           | Change the gas payment currency address (supports only ETH or STRK) |
+| handleGetGasFree            | `(amount: number, toAddress: string) => promise<T>` | Trigger a query for gas fees                     |
+| handleTransfer              | `(amount: number, toAddress: string) => promise<T>` | Initiate a transaction                             |
 
-## 维护者
+## Maintainer
 
 [@peiliang wang](https://github.com/dk264874293)。
 
-### 使用许可
+### License
 
 [MIT](LICENSE)
