@@ -11,7 +11,7 @@ import {
   AccountInterface,
 } from "starknet";
 import { ZkPrivateContext, ZkStateContext, ZkDispatcherContext } from "./Provider";
-export { useZkState, useZkDispatcher, useZkContext } from "./Provider";
+export { useZkPrivate, useZkState, useZkDispatcher, useZkContext } from "./Provider";
 import { IZkLoginProviderProps, IUserInfo, IWalletConfig, IWalletDetail, IZkState } from "./types";
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
 import { nodeUrl } from "../../config/walletConfig";
