@@ -16,7 +16,7 @@ import { IZkLoginProviderProps, IUserInfo, IWalletConfig, IWalletDetail, IZkStat
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
 import { nodeUrl } from "../../config/walletConfig";
 import { generateRandomness, generateAccountAddress } from "@/utils/wallet";
-import { getJWTData, findJwtClaim, createInputs } from "@/utils/proof";
+import { getJWTData, findJwtClaim, createNewInputs } from "@/utils/proof";
 import walletAbi from "@/config/walletAbi";
 import { getSalt, generateNonce } from "@/http";
 
@@ -44,25 +44,31 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   const [globalL3Account, setGlobalL3Account] = useState<AccountInterface | null>(null);
 
   const handleLogIn = useCallback(
-    async (jwtToken: string) => {
+    async (jwtToken: string, public_key: any) => {
+      console.log("jwtToken --->", jwtToken);
+      // return;
       const { publicKey, randomness, exp, privateKey } = (walletConfig as IWalletConfig) || {};
       setLoginLoading(true);
-      setLoadingContent("Getting Salt");
-      let salt = "";
+      // setLoadingContent("Getting Salt");
+      let salt = ""; //"481790905554632323806433746742638857355031021005257903843288899095303544";
+
       // 获取salt
       try {
         const res = await getSalt(jwtToken);
+        // console.log("res.data", res.data);
         salt = res.data;
       } catch (error) {
         setLoginLoading(false);
         throw new Error("get Salt error");
       }
+
       // 解析jwt
       const jwtData = getJWTData(jwtToken);
 
       const jwtClaim = findJwtClaim(jwtData);
       // 解析加密数据
-      const input = await createInputs(
+
+      const { inputs: input, jwtLength } = await createNewInputs(
         jwtData,
         {
           salt,
@@ -71,6 +77,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
           exp,
         },
         jwtClaim,
+        public_key,
       );
 
       setLoadingContent("Calculating Address");
@@ -108,6 +115,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         callData: OZaccountConstructorCallData,
         salt: salt,
         input,
+        jwtLength,
         pub_hash,
         sub,
         exp,
@@ -221,6 +229,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
           getNonce();
         }
       } else {
+        handleUserLogOut();
         getNonce();
       }
     };

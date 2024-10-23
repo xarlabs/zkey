@@ -8,19 +8,16 @@
 // versions:
 // 	protoc-gen-grpc-web v1.5.0
 // 	protoc              v5.27.3
-// source: prove_serivce.proto
-
+// source: prove_service_2.proto
 
 /* eslint-disable */
 // @ts-nocheck
 
-
-
 const grpc = {};
-grpc.web = require('grpc-web');
+grpc.web = require("grpc-web");
 
 const proto = {};
-proto.prove_service = require('./prove_service_pb.js');
+proto.prove_service = require("./prove_service_pb.js");
 
 /**
  * @param {string} hostname
@@ -30,10 +27,9 @@ proto.prove_service = require('./prove_service_pb.js');
  * @struct
  * @final
  */
-proto.prove_service.ProveServiceClient =
-    function(hostname, credentials, options) {
+proto.prove_service.ProveServiceClient = function (hostname, credentials, options) {
   if (!options) options = {};
-  options.format = 'text';
+  options.format = "text";
 
   /**
    * @private @const {!grpc.web.GrpcWebClientBase} The client
@@ -43,10 +39,8 @@ proto.prove_service.ProveServiceClient =
   /**
    * @private @const {string} The hostname
    */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
+  this.hostname_ = hostname.replace(/\/+$/, "");
 };
-
 
 /**
  * @param {string} hostname
@@ -56,10 +50,9 @@ proto.prove_service.ProveServiceClient =
  * @struct
  * @final
  */
-proto.prove_service.ProveServicePromiseClient =
-    function(hostname, credentials, options) {
+proto.prove_service.ProveServicePromiseClient = function (hostname, credentials, options) {
   if (!options) options = {};
-  options.format = 'text';
+  options.format = "text";
 
   /**
    * @private @const {!grpc.web.GrpcWebClientBase} The client
@@ -69,10 +62,8 @@ proto.prove_service.ProveServicePromiseClient =
   /**
    * @private @const {string} The hostname
    */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
+  this.hostname_ = hostname.replace(/\/+$/, "");
 };
-
 
 /**
  * @const
@@ -80,8 +71,8 @@ proto.prove_service.ProveServicePromiseClient =
  *   !proto.prove_service.ProveRequest,
  *   !proto.prove_service.ProveResponse>}
  */
-const methodDescriptor_ProveService_prove = new grpc.web.MethodDescriptor(
-  '/prove_service.ProveService/prove',
+const methodDescriptor_ProveService_Prove = new grpc.web.MethodDescriptor(
+  "/prove_service.ProveService/Prove",
   grpc.web.MethodType.UNARY,
   proto.prove_service.ProveRequest,
   proto.prove_service.ProveResponse,
@@ -89,12 +80,11 @@ const methodDescriptor_ProveService_prove = new grpc.web.MethodDescriptor(
    * @param {!proto.prove_service.ProveRequest} request
    * @return {!Uint8Array}
    */
-  function(request) {
+  function (request) {
     return request.serializeBinary();
   },
-  proto.prove_service.ProveResponse.deserializeBinary
+  proto.prove_service.ProveResponse.deserializeBinary,
 );
-
 
 /**
  * @param {!proto.prove_service.ProveRequest} request The
@@ -106,16 +96,15 @@ const methodDescriptor_ProveService_prove = new grpc.web.MethodDescriptor(
  * @return {!grpc.web.ClientReadableStream<!proto.prove_service.ProveResponse>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.prove_service.ProveServiceClient.prototype.prove =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/prove_service.ProveService/prove',
-      request,
-      metadata || {},
-      methodDescriptor_ProveService_prove,
-      callback);
+proto.prove_service.ProveServiceClient.prototype.prove = function (request, metadata, callback) {
+  return this.client_.rpcCall(
+    this.hostname_ + "/prove_service.ProveService/Prove",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_Prove,
+    callback,
+  );
 };
-
 
 /**
  * @param {!proto.prove_service.ProveRequest} request The
@@ -125,137 +114,396 @@ proto.prove_service.ProveServiceClient.prototype.prove =
  * @return {!Promise<!proto.prove_service.ProveResponse>}
  *     Promise that resolves to the response
  */
-proto.prove_service.ProveServicePromiseClient.prototype.prove =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/prove_service.ProveService/prove',
-      request,
-      metadata || {},
-      methodDescriptor_ProveService_prove);
+proto.prove_service.ProveServicePromiseClient.prototype.prove = function (request, metadata) {
+  return this.client_.unaryCall(
+    this.hostname_ + "/prove_service.ProveService/Prove",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_Prove,
+  );
 };
-
 
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.prove_service.EmptyRequest,
- *   !proto.prove_service.ProveResponse>}
+ *   !proto.prove_service.ProveWithWitnessRequest,
+ *   !proto.prove_service.ProveWithWitnessResponse>}
  */
-const methodDescriptor_ProveService_get_public_key = new grpc.web.MethodDescriptor(
-  '/prove_service.ProveService/get_public_key',
+const methodDescriptor_ProveService_ProveWithWitness = new grpc.web.MethodDescriptor(
+  "/prove_service.ProveService/ProveWithWitness",
   grpc.web.MethodType.UNARY,
-  proto.prove_service.EmptyRequest,
-  proto.prove_service.ProveResponse,
+  proto.prove_service.ProveWithWitnessRequest,
+  proto.prove_service.ProveWithWitnessResponse,
   /**
-   * @param {!proto.prove_service.EmptyRequest} request
+   * @param {!proto.prove_service.ProveWithWitnessRequest} request
    * @return {!Uint8Array}
    */
-  function(request) {
+  function (request) {
     return request.serializeBinary();
   },
-  proto.prove_service.ProveResponse.deserializeBinary
+  proto.prove_service.ProveWithWitnessResponse.deserializeBinary,
 );
 
-
 /**
- * @param {!proto.prove_service.EmptyRequest} request The
+ * @param {!proto.prove_service.ProveWithWitnessRequest} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.prove_service.ProveResponse)}
+ * @param {function(?grpc.web.RpcError, ?proto.prove_service.ProveWithWitnessResponse)}
  *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.prove_service.ProveResponse>|undefined}
+ * @return {!grpc.web.ClientReadableStream<!proto.prove_service.ProveWithWitnessResponse>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.prove_service.ProveServiceClient.prototype.get_public_key =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/prove_service.ProveService/get_public_key',
-      request,
-      metadata || {},
-      methodDescriptor_ProveService_get_public_key,
-      callback);
+proto.prove_service.ProveServiceClient.prototype.proveWithWitness = function (
+  request,
+  metadata,
+  callback,
+) {
+  return this.client_.rpcCall(
+    this.hostname_ + "/prove_service.ProveService/ProveWithWitness",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_ProveWithWitness,
+    callback,
+  );
 };
 
-
 /**
- * @param {!proto.prove_service.EmptyRequest} request The
+ * @param {!proto.prove_service.ProveWithWitnessRequest} request The
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!Promise<!proto.prove_service.ProveResponse>}
+ * @return {!Promise<!proto.prove_service.ProveWithWitnessResponse>}
  *     Promise that resolves to the response
  */
-proto.prove_service.ProveServicePromiseClient.prototype.get_public_key =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/prove_service.ProveService/get_public_key',
-      request,
-      metadata || {},
-      methodDescriptor_ProveService_get_public_key);
+proto.prove_service.ProveServicePromiseClient.prototype.proveWithWitness = function (
+  request,
+  metadata,
+) {
+  return this.client_.unaryCall(
+    this.hostname_ + "/prove_service.ProveService/ProveWithWitness",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_ProveWithWitness,
+  );
 };
-
 
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.prove_service.EmptyRequest,
- *   !proto.prove_service.EmptyResponse>}
+ *   !proto.prove_service.ProveNosha256Request,
+ *   !proto.prove_service.ProveNosha256Response>}
  */
-const methodDescriptor_ProveService_ping = new grpc.web.MethodDescriptor(
-  '/prove_service.ProveService/ping',
+const methodDescriptor_ProveService_ProveNosha256 = new grpc.web.MethodDescriptor(
+  "/prove_service.ProveService/ProveNosha256",
   grpc.web.MethodType.UNARY,
-  proto.prove_service.EmptyRequest,
-  proto.prove_service.EmptyResponse,
+  proto.prove_service.ProveNosha256Request,
+  proto.prove_service.ProveNosha256Response,
   /**
-   * @param {!proto.prove_service.EmptyRequest} request
+   * @param {!proto.prove_service.ProveNosha256Request} request
    * @return {!Uint8Array}
    */
-  function(request) {
+  function (request) {
     return request.serializeBinary();
   },
-  proto.prove_service.EmptyResponse.deserializeBinary
+  proto.prove_service.ProveNosha256Response.deserializeBinary,
 );
 
-
 /**
- * @param {!proto.prove_service.EmptyRequest} request The
+ * @param {!proto.prove_service.ProveNosha256Request} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.prove_service.EmptyResponse)}
+ * @param {function(?grpc.web.RpcError, ?proto.prove_service.ProveNosha256Response)}
  *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.prove_service.EmptyResponse>|undefined}
+ * @return {!grpc.web.ClientReadableStream<!proto.prove_service.ProveNosha256Response>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.prove_service.ProveServiceClient.prototype.ping =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/prove_service.ProveService/ping',
-      request,
-      metadata || {},
-      methodDescriptor_ProveService_ping,
-      callback);
+proto.prove_service.ProveServiceClient.prototype.proveNosha256 = function (
+  request,
+  metadata,
+  callback,
+) {
+  return this.client_.rpcCall(
+    this.hostname_ + "/prove_service.ProveService/ProveNosha256",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_ProveNosha256,
+    callback,
+  );
 };
 
-
 /**
- * @param {!proto.prove_service.EmptyRequest} request The
+ * @param {!proto.prove_service.ProveNosha256Request} request The
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!Promise<!proto.prove_service.EmptyResponse>}
+ * @return {!Promise<!proto.prove_service.ProveNosha256Response>}
  *     Promise that resolves to the response
  */
-proto.prove_service.ProveServicePromiseClient.prototype.ping =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/prove_service.ProveService/ping',
-      request,
-      metadata || {},
-      methodDescriptor_ProveService_ping);
+proto.prove_service.ProveServicePromiseClient.prototype.proveNosha256 = function (
+  request,
+  metadata,
+) {
+  return this.client_.unaryCall(
+    this.hostname_ + "/prove_service.ProveService/ProveNosha256",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_ProveNosha256,
+  );
 };
 
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.prove_service.ProveNosha256WithWitnessRequest,
+ *   !proto.prove_service.ProveNosha256WithWitnessResponse>}
+ */
+const methodDescriptor_ProveService_ProveNosha256WithWitness = new grpc.web.MethodDescriptor(
+  "/prove_service.ProveService/ProveNosha256WithWitness",
+  grpc.web.MethodType.UNARY,
+  proto.prove_service.ProveNosha256WithWitnessRequest,
+  proto.prove_service.ProveNosha256WithWitnessResponse,
+  /**
+   * @param {!proto.prove_service.ProveNosha256WithWitnessRequest} request
+   * @return {!Uint8Array}
+   */
+  function (request) {
+    return request.serializeBinary();
+  },
+  proto.prove_service.ProveNosha256WithWitnessResponse.deserializeBinary,
+);
+
+/**
+ * @param {!proto.prove_service.ProveNosha256WithWitnessRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.prove_service.ProveNosha256WithWitnessResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.prove_service.ProveNosha256WithWitnessResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.prove_service.ProveServiceClient.prototype.proveNosha256WithWitness = function (
+  request,
+  metadata,
+  callback,
+) {
+  return this.client_.rpcCall(
+    this.hostname_ + "/prove_service.ProveService/ProveNosha256WithWitness",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_ProveNosha256WithWitness,
+    callback,
+  );
+};
+
+/**
+ * @param {!proto.prove_service.ProveNosha256WithWitnessRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.prove_service.ProveNosha256WithWitnessResponse>}
+ *     Promise that resolves to the response
+ */
+proto.prove_service.ProveServicePromiseClient.prototype.proveNosha256WithWitness = function (
+  request,
+  metadata,
+) {
+  return this.client_.unaryCall(
+    this.hostname_ + "/prove_service.ProveService/ProveNosha256WithWitness",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_ProveNosha256WithWitness,
+  );
+};
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.prove_service.ProveNosha256OffchainRequest,
+ *   !proto.prove_service.ProveNosha256OffchainResponse>}
+ */
+const methodDescriptor_ProveService_ProveNosha256Offchain = new grpc.web.MethodDescriptor(
+  "/prove_service.ProveService/ProveNosha256Offchain",
+  grpc.web.MethodType.UNARY,
+  proto.prove_service.ProveNosha256OffchainRequest,
+  proto.prove_service.ProveNosha256OffchainResponse,
+  /**
+   * @param {!proto.prove_service.ProveNosha256OffchainRequest} request
+   * @return {!Uint8Array}
+   */
+  function (request) {
+    return request.serializeBinary();
+  },
+  proto.prove_service.ProveNosha256OffchainResponse.deserializeBinary,
+);
+
+/**
+ * @param {!proto.prove_service.ProveNosha256OffchainRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.prove_service.ProveNosha256OffchainResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.prove_service.ProveNosha256OffchainResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.prove_service.ProveServiceClient.prototype.proveNosha256Offchain = function (
+  request,
+  metadata,
+  callback,
+) {
+  return this.client_.rpcCall(
+    this.hostname_ + "/prove_service.ProveService/ProveNosha256Offchain",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_ProveNosha256Offchain,
+    callback,
+  );
+};
+
+/**
+ * @param {!proto.prove_service.ProveNosha256OffchainRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.prove_service.ProveNosha256OffchainResponse>}
+ *     Promise that resolves to the response
+ */
+proto.prove_service.ProveServicePromiseClient.prototype.proveNosha256Offchain = function (
+  request,
+  metadata,
+) {
+  return this.client_.unaryCall(
+    this.hostname_ + "/prove_service.ProveService/ProveNosha256Offchain",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_ProveNosha256Offchain,
+  );
+};
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.prove_service.Empty,
+ *   !proto.prove_service.GetPublicKeyResponse>}
+ */
+const methodDescriptor_ProveService_GetPublicKey = new grpc.web.MethodDescriptor(
+  "/prove_service.ProveService/GetPublicKey",
+  grpc.web.MethodType.UNARY,
+  proto.prove_service.Empty,
+  proto.prove_service.GetPublicKeyResponse,
+  /**
+   * @param {!proto.prove_service.Empty} request
+   * @return {!Uint8Array}
+   */
+  function (request) {
+    return request.serializeBinary();
+  },
+  proto.prove_service.GetPublicKeyResponse.deserializeBinary,
+);
+
+/**
+ * @param {!proto.prove_service.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.prove_service.GetPublicKeyResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.prove_service.GetPublicKeyResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.prove_service.ProveServiceClient.prototype.getPublicKey = function (
+  request,
+  metadata,
+  callback,
+) {
+  return this.client_.rpcCall(
+    this.hostname_ + "/prove_service.ProveService/GetPublicKey",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_GetPublicKey,
+    callback,
+  );
+};
+
+/**
+ * @param {!proto.prove_service.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.prove_service.GetPublicKeyResponse>}
+ *     Promise that resolves to the response
+ */
+proto.prove_service.ProveServicePromiseClient.prototype.getPublicKey = function (
+  request,
+  metadata,
+) {
+  return this.client_.unaryCall(
+    this.hostname_ + "/prove_service.ProveService/GetPublicKey",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_GetPublicKey,
+  );
+};
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.prove_service.Empty,
+ *   !proto.prove_service.Empty>}
+ */
+const methodDescriptor_ProveService_Ping = new grpc.web.MethodDescriptor(
+  "/prove_service.ProveService/Ping",
+  grpc.web.MethodType.UNARY,
+  proto.prove_service.Empty,
+  proto.prove_service.Empty,
+  /**
+   * @param {!proto.prove_service.Empty} request
+   * @return {!Uint8Array}
+   */
+  function (request) {
+    return request.serializeBinary();
+  },
+  proto.prove_service.Empty.deserializeBinary,
+);
+
+/**
+ * @param {!proto.prove_service.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.prove_service.Empty)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.prove_service.Empty>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.prove_service.ProveServiceClient.prototype.ping = function (request, metadata, callback) {
+  return this.client_.rpcCall(
+    this.hostname_ + "/prove_service.ProveService/Ping",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_Ping,
+    callback,
+  );
+};
+
+/**
+ * @param {!proto.prove_service.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.prove_service.Empty>}
+ *     Promise that resolves to the response
+ */
+proto.prove_service.ProveServicePromiseClient.prototype.ping = function (request, metadata) {
+  return this.client_.unaryCall(
+    this.hostname_ + "/prove_service.ProveService/Ping",
+    request,
+    metadata || {},
+    methodDescriptor_ProveService_Ping,
+  );
+};
 
 module.exports = proto.prove_service;
-

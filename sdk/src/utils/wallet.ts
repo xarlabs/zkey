@@ -1,5 +1,5 @@
 import { CallData, hash, Account, cairo, uint256, TransactionStatus } from "starknet";
-import JSONbig from "json-bigint";
+
 // import { buildEddsa, buildPoseidon } from "circomlibjs";
 import { getSubHash } from "@/http";
 
@@ -16,7 +16,7 @@ import { OZaccountClassHash } from "../config/walletConfig";
 
 import { IContractAddress } from "./type";
 
-import { checkWalletDeploy, getProve, getGarage } from "@/http";
+import { checkWalletDeploy, getProve, getGarage, getGrpcProve } from "@/http";
 
 /**
    * 生成指定长度的随机数，并将其转换为十六进制字符串格式的大整数表示
@@ -167,28 +167,26 @@ export async function setWalletDeploy({ callData, pub_hash, provider, account })
   await provider.waitForTransaction(transaction_hash);
 }
 
-export async function checkZKeyLogin(input: any) {
+export async function checkZKeyLogin(input: any, jwtLength: number) {
   const INPUT = JSON.stringify(input);
   let resData = null;
   let proof = "";
   try {
-    const res = await getProve(INPUT);
-    resData = JSONbig.parse(res);
-    console.log("resData", resData);
-    // let result = res.split("[").join("").split("]").join("");
-    // proof = result.split(',');
+    const res = await getGrpcProve(INPUT, jwtLength);
+    console.log("res -->", res);
+    resData = res.code === 0 ? res.data : "";
   } catch (error) {
     console.log("getProve error --->>> ", error);
   }
   if (resData) {
-    let { proof: resProof, witness } = resData;
-    const witnessData = witness.map((_) => _.toString(10));
-    console.log("witness", witnessData);
+    const { proof_data, witness_data } = resData;
     try {
       proof = await getGarage({
-        input: JSON.stringify(witnessData),
-        proof: JSON.stringify(resProof),
+        input: witness_data,
+        proof: proof_data,
       });
+
+      console.log("proof -->", proof);
     } catch (error) {
       console.log("getGarage error --->>> ", error);
     }

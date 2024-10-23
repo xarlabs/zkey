@@ -46,6 +46,12 @@ Object.defineProperty(exports, "useZkDispatcher", {
     return _ZkLoginProvider.useZkDispatcher;
   }
 });
+Object.defineProperty(exports, "useZkPrivate", {
+  enumerable: true,
+  get: function get() {
+    return _ZkLoginProvider.useZkPrivate;
+  }
+});
 Object.defineProperty(exports, "useZkState", {
   enumerable: true,
   get: function get() {

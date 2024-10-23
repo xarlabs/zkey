@@ -216,7 +216,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
       throw new Error("Insufficient funds to pay fee");
     }
 
-    const { input, callData, address, pub_hash, exp, publicKey } = walletDetail;
+    const { input, jwtLength, callData, address, pub_hash, exp, publicKey } = walletDetail;
     setTransferLoading(true);
     if (!isDeploy) {
       setTransferStateText("Checking Address");
@@ -261,7 +261,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
         const isNotExpired = exp && Number(exp) - dateNow > 30;
         if (isNotExpired) {
           setTransferStateText("Getting Zero Knowledge Proof");
-          const proof = await checkZKeyLogin(input);
+          const proof = await checkZKeyLogin(input, jwtLength);
           setTransferStateText("Setting Session Key");
 
           try {

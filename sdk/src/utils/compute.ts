@@ -2,13 +2,14 @@
  * @Author: 汪培良 dk264874293@gmail.com
  * @Date: 2024-09-09 17:40:24
  * @LastEditors: 汪培良 dk264874293@gmail.com
- * @LastEditTime: 2024-09-09 17:40:50
+ * @LastEditTime: 2024-10-11 10:14:57
  * @FilePath: /sdk/src/utils/compute.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { CIRCOM_BIGINT_N, CIRCOM_BIGINT_K } from "../config/const";
 import { IFindClaimRes } from "./type.d";
 const textEncoder = new TextEncoder();
+const CryptoJS = require("crypto");
 
 export function isBytes(a: any): boolean {
   return (
@@ -121,25 +122,16 @@ export const sha256Pad = async (
   prehash_prepad_m: Uint8Array,
   maxShaBytes: number,
 ): Promise<[Uint8Array, number]> => {
-  if (prehash_prepad_m.length === 0) {
-    prehash_prepad_m = new Uint8Array([0x80]); // 特殊处理空数组
-  }
-
   const length_bits = prehash_prepad_m.length * 8; // bytes to bits
   const length_in_bytes = int64toBytes(length_bits);
-  prehash_prepad_m = mergeUInt8Arrays(prehash_prepad_m, int8toBytes(0x80)); // MD Padding
 
+  prehash_prepad_m = mergeUInt8Arrays(prehash_prepad_m, int8toBytes(2 ** 7));
   while ((prehash_prepad_m.length * 8 + length_in_bytes.length * 8) % 512 !== 0) {
     prehash_prepad_m = mergeUInt8Arrays(prehash_prepad_m, int8toBytes(0));
   }
   prehash_prepad_m = mergeUInt8Arrays(prehash_prepad_m, length_in_bytes);
 
   const messageLen = prehash_prepad_m.length;
-
-  if (prehash_prepad_m.length > maxShaBytes) {
-    throw new Error("maxShaBytes is too small");
-  }
-
   while (prehash_prepad_m.length < maxShaBytes) {
     prehash_prepad_m = mergeUInt8Arrays(prehash_prepad_m, int64toBytes(0));
   }
@@ -317,4 +309,12 @@ export const findClaimLocation = (jwt: any, claim: any, max: any): IFindClaimRes
     claim: [claimBytes.map((v) => v.toString()), claimLocation],
     version,
   };
+};
+
+export const shaHash = (str) => {
+  return CryptoJS.createHash("sha256").update(str).digest();
+};
+
+export const uint8ToBits = (uint8) => {
+  return uint8.reduce((acc, byte) => acc + byte.toString(2).padStart(8, "0"), "");
 };

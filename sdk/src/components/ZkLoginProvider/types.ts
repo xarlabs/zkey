@@ -33,6 +33,7 @@ export interface IWalletDetail {
   publicKey: string;
   salt: string;
   sub: any;
+  jwtLength: number;
 }
 
 export interface IZkPrivate {
