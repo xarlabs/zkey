@@ -6,12 +6,23 @@ import { WalletStateContext, WalletDispatcherContext } from "./Provider";
 export { useWalletState, useWalletDispatcher } from "./Provider";
 import { useZkState, useZkDispatcher } from "@/components/ZkLoginProvider";
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
-import { u256toWeb, setWalletDeploy, checkZKeyLogin, walletResetPub } from "@/utils/wallet";
-import { SEPOLIA_DEF_CONTRACT_ADDRESS, GAS_ADDRESS } from "@/config/walletConfig";
+import {
+  u256toWeb,
+  setWalletDeploy,
+  checkZKeyLogin,
+  walletResetPub,
+  walletResetTransfer,
+  checkWalletDeploy,
+} from "@/utils/wallet";
+import {
+  SEPOLIA_DEF_CONTRACT_ADDRESS,
+  GAS_ADDRESS,
+  WALLET_V3_ADDRESS,
+  OZaccountClassHash,
+} from "@/config/walletConfig";
 import { IWalletProviderProps } from "./type";
 import tokenApiJson from "@/config/tokenApi";
-import { WALLET_V3_ADDRESS, OZaccountClassHash } from "@/config/walletConfig";
-import { getWalletPrices, checkWalletDeploy } from "@/http";
+import { getWalletPrices } from "@/http";
 import walletAbi from "@/config/walletAbi";
 
 const WalletProvider = (props: IWalletProviderProps) => {
@@ -162,11 +173,11 @@ const WalletProvider = (props: IWalletProviderProps) => {
         return;
       }
       setGasLoading(true);
-      const { callData } = walletDetail;
+      const { callData, callDataParams } = walletDetail;
       if (!isDeploy) {
-        const res = await checkWalletDeploy(transferAccount.address);
-        const checkDeploy = res?.code === 0;
-        if (!checkDeploy) {
+        const res = await checkWalletDeploy({ accountAddress: transferAccount.address, provider });
+        // const checkDeploy = res?.code === 0;
+        if (!res) {
           try {
             const { suggestedMaxFee: estimatedFee1 } =
               await transferAccount?.estimateAccountDeployFee({
@@ -184,10 +195,16 @@ const WalletProvider = (props: IWalletProviderProps) => {
         }
       }
       try {
+        const { aud1, aud2 } = callDataParams || {};
         const { suggestedMaxFee: estimatedFee1 } = await transferAccount.estimateInvokeFee({
           contractAddress: activeWallet.address,
           entrypoint: "transfer",
           calldata: CallData.compile({
+            a: aud1.low,
+            b: aud1.high,
+            c: aud2.low,
+            d: aud2.high,
+            e: 0x1,
             receiption: toAddress,
             amount: cairo.uint256(amount * 10 ** 18),
           }),
@@ -208,22 +225,30 @@ const WalletProvider = (props: IWalletProviderProps) => {
     // 钱包余额
     const TotalNum = new Big(activeGasBalance.balance);
     // 需要支付的
+    const addGas = typeof gasFree === "number" ? gasFree : 0;
     const TotalGasBalance = isactiveGasPrice
-      ? new Big(amount).plus(new Big(gasFree))
-      : new Big(gasFree);
+      ? new Big(amount).plus(new Big(addGas))
+      : new Big(addGas);
 
     if (!TotalNum.gte(TotalGasBalance)) {
       throw new Error("Insufficient funds to pay fee");
     }
 
-    const { input, jwtLength, callData, address, pub_hash, exp, publicKey } = walletDetail;
+    const { input, jwtLength, address, pub_hash, exp, publicKey, callData, callDataParams } =
+      walletDetail;
+    const { aud1, aud2 } = callDataParams || {};
     setTransferLoading(true);
     if (!isDeploy) {
       setTransferStateText("Checking Address");
-      const res = await checkWalletDeploy(address);
-      const checkDeploy = res?.code === 0;
-      if (!checkDeploy) {
+      const idDeploy = await checkWalletDeploy({
+        accountAddress: transferAccount.address,
+        provider,
+      });
+      console.log("idDeploy", idDeploy);
+      // const checkDeploy = res?.code === 0;
+      if (!idDeploy) {
         setTransferStateText("Deploying Account");
+
         try {
           await setWalletDeploy({
             callData,
@@ -231,8 +256,10 @@ const WalletProvider = (props: IWalletProviderProps) => {
             provider: provider,
             account: transferAccount,
           });
-          const res = await checkWalletDeploy(address);
-          const isDeploy = res?.code === 0;
+          const isDeploy = await checkWalletDeploy({
+            accountAddress: transferAccount.address,
+            provider,
+          });
           handleChangeDeploy(isDeploy);
           handleLocalStorage(
             "set",
@@ -252,7 +279,14 @@ const WalletProvider = (props: IWalletProviderProps) => {
     }
     try {
       const acountObj = new Contract(walletAbi.abi, address, provider);
-      const bal1 = await acountObj.get_public_key();
+
+      const bal1 = await acountObj.get_public_key([
+        aud1.low,
+        aud1.high,
+        aud2.low,
+        aud2.high,
+        "0x1",
+      ]);
 
       // 如果公钥不匹配则重设公司钥对
       if (publicKey !== num.toHexString(bal1)) {
@@ -261,9 +295,10 @@ const WalletProvider = (props: IWalletProviderProps) => {
         const isNotExpired = exp && Number(exp) - dateNow > 30;
         if (isNotExpired) {
           setTransferStateText("Getting Zero Knowledge Proof");
+          // return;
           const proof = await checkZKeyLogin(input, jwtLength);
           setTransferStateText("Setting Session Key");
-
+          console.log("callDataParams", callDataParams);
           try {
             await walletResetPub({
               account: transferAccount,
@@ -290,16 +325,31 @@ const WalletProvider = (props: IWalletProviderProps) => {
         }
       }
       try {
-        // 链接钱包
-        const linkContract = new Contract(tokenApiJson.abi, activeWallet?.address, transferAccount);
+        // console.log("callDataParams", callDataParams);
         setTransferStateText("Executing Transaction");
-        // 转账
-        const respTransfer = await linkContract.transfer(
-          toAddress,
-          BigInt(amount * 10 ** 18).toString(),
-        );
-        // 执行
-        await provider.waitForTransaction(respTransfer.transaction_hash);
+        await walletResetTransfer({
+          account: transferAccount,
+          accountAddress: activeContract,
+          provider: provider,
+          toAddress: toAddress,
+          callDataParams,
+          amount: BigInt(amount * 10 ** 18).toString(),
+        });
+        // 链接钱包
+        // const linkContract = new Contract(tokenApiJson.abi, activeWallet?.address, transferAccount);
+        // setTransferStateText("Executing Transaction");
+        // // 转账
+        // const respTransfer = await linkContract.transfer(
+        //   aud1.high,
+        //   aud1.low,
+        //   aud2.high,
+        //   aud2.low,
+        //   0x1,
+        //   toAddress,
+        //   BigInt(amount * 10 ** 18).toString(),
+        // );
+        // // 执行
+        // await provider.waitForTransaction(respTransfer.transaction_hash);
 
         handleWalletBalance(activeWallet?.address);
         setTransferLoading(false);
@@ -309,6 +359,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
         throw new Error("Transfer failure Please check the entered information");
       }
     } catch (error) {
+      console.log("error        !", error);
       setTransferLoading(false);
       throw error;
     }

@@ -35,7 +35,7 @@ export const GAS_ADDRESS = [ethContract, strkContract];
 export const WALLET_V3_ADDRESS = [strkContract];
 
 // rpc 地址
-export const nodeUrl = "https://free-rpc.nethermind.io/sepolia-juno/v0_7";
+export const nodeUrl = "https://starknet-sepolia.infura.io/v3/4e0254d8df42470d8f956bc989beef09"; //"https://free-rpc.nethermind.io/sepolia-juno/v0_7";
 
 // 测试账号
 export const testPrivateKey = "0x460ea0c9712b2d3918cff2d967f314974eeb91ebda2f6b65024d66a70e3bf70";
@@ -46,4 +46,4 @@ export const testAddress = "0x047585f373226434a5f5c0925a4b959cd28cc741d869e212e7
 // export const OZaccountClassHash = "0x015f16375a75b6c48c6decaf81683af6c06866d28ba546c26241a30de057cba9";
 
 export const OZaccountClassHash =
-  "0x015f16375a75b6c48c6decaf81683af6c06866d28ba546c26241a30de057cba9";
+  "0x067f62a82fa39904da770cdc740020e90748036e0554e4c5f24712002c276fb0";

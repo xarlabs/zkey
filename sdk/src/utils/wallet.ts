@@ -1,4 +1,4 @@
-import { CallData, hash, Account, cairo, uint256, TransactionStatus } from "starknet";
+import { CallData, hash, Account, Contract, cairo, uint256, TransactionStatus } from "starknet";
 
 // import { buildEddsa, buildPoseidon } from "circomlibjs";
 import { getSubHash } from "@/http";
@@ -16,7 +16,9 @@ import { OZaccountClassHash } from "../config/walletConfig";
 
 import { IContractAddress } from "./type";
 
-import { checkWalletDeploy, getProve, getGarage, getGrpcProve } from "@/http";
+import { getGarage, getGrpcProve } from "@/http";
+
+import walletAbi from "@/config/walletAbi";
 
 /**
    * 生成指定长度的随机数，并将其转换为十六进制字符串格式的大整数表示
@@ -58,7 +60,7 @@ export async function getContractAddress({
   exp,
   jwtClaim,
 }: IContractAddress) {
-  const { issVersion } = jwtClaim;
+  const { issVersion, audVersion } = jwtClaim;
   try {
     // 验证JWT Token格式
     if (!jwtToken.includes(".")) {
@@ -80,6 +82,8 @@ export async function getContractAddress({
 
     let iss_result = base64ToAscii(issVersion, 32);
 
+    let aud_result = base64ToAscii(audVersion, 44);
+
     let subascii = asciiCodesToString(data.sub);
 
     // let poseidon = await buildPoseidon();
@@ -87,11 +91,21 @@ export async function getContractAddress({
     // const F = eddsa.babyJub.F;
     // let sub_hash = F.toObject(poseidon([subascii, salt]));
     const subRes = await getSubHash(subascii, salt);
+
     let param_data = {
       iss1: cairo.uint256(iss_result.firstPartAscii),
       iss2: cairo.uint256(iss_result.secondPartAscii),
+      aud1: cairo.uint256(aud_result.firstPartAscii),
+      aud2: cairo.uint256(aud_result.secondPartAscii),
       sub: cairo.uint256(subRes.code === 0 ? subRes.data : ""),
     };
+
+    // const audClaim = findClaimLocation(data.jwt, data.aud, MAX_ISS_BYTES);
+    // let aud_result = base64ToAscii(audClaim, 44);
+    // console.log(
+    //   cairo.uint256(aud_result.firstPartAscii),
+    //   cairo.uint256(aud_result.secondPartAscii),
+    // );
 
     let param = CallData.compile(param_data);
 
@@ -113,10 +127,22 @@ export async function getContractAddress({
       OZaccount,
       OZcontractAddress,
       OZaccountConstructorCallData,
+      param_data,
     };
   } catch (error) {
     console.error("Error in getContractAddress:", error);
     throw error; // 重新抛出异常以保持一致性
+  }
+}
+
+export async function checkWalletDeploy({ accountAddress, provider }) {
+  try {
+    const acountObj = new Contract(walletAbi.abi, accountAddress, provider);
+
+    await acountObj.get_public_key([1]);
+    return true;
+  } catch (error) {
+    return false;
   }
 }
 
@@ -129,7 +155,7 @@ export async function generateAccountAddress({
   jwtClaim,
 }: IContractAddress) {
   // 计算钱包地址
-  const { OZaccount, OZcontractAddress, OZaccountConstructorCallData, pub_hash, sub } =
+  const { OZaccount, OZcontractAddress, OZaccountConstructorCallData, pub_hash, sub, param_data } =
     await getContractAddress({
       provider,
       privateKey,
@@ -139,16 +165,16 @@ export async function generateAccountAddress({
       jwtClaim,
     });
 
-  // 检查钱包是否部署
-  const res = await checkWalletDeploy(OZcontractAddress);
+  const isDeploy = await checkWalletDeploy({ accountAddress: OZcontractAddress, provider });
 
   return {
-    isDeploy: res?.code === 0,
+    isDeploy: isDeploy, //res?.code === 0,
     sub,
     pub_hash,
     OZaccount,
     OZcontractAddress,
     OZaccountConstructorCallData,
+    param_data,
   };
 }
 
@@ -173,7 +199,6 @@ export async function checkZKeyLogin(input: any, jwtLength: number) {
   let proof = "";
   try {
     const res = await getGrpcProve(INPUT, jwtLength);
-    console.log("res -->", res);
     resData = res.code === 0 ? res.data : "";
   } catch (error) {
     console.log("getProve error --->>> ", error);
@@ -185,8 +210,6 @@ export async function checkZKeyLogin(input: any, jwtLength: number) {
         input: witness_data,
         proof: proof_data,
       });
-
-      console.log("proof -->", proof);
     } catch (error) {
       console.log("getGarage error --->>> ", error);
     }
@@ -207,7 +230,8 @@ export async function walletResetPub({ account, provider, accountAddress, proof 
     calldata: CallData.compile({
       prefix: "0x535441524b4e45545f434f4e54524143545f41444452455353",
       account_hash: OZaccountClassHash,
-      calls,
+      platform: "0x1",
+      calls: calls.slice(1),
     }),
   };
 
@@ -226,6 +250,47 @@ export async function walletResetPub({ account, provider, accountAddress, proof 
   const duration = endTime - startTime;
 
   console.log(`执行时间为${duration}ms`);
+
+  return calls_data;
+}
+
+export async function walletResetTransfer({
+  account,
+  accountAddress,
+  provider,
+  toAddress,
+  callDataParams,
+  amount,
+}) {
+  const { aud1, aud2 } = callDataParams || {};
+  const calls_data = {
+    contractAddress: accountAddress,
+    entrypoint: "transfer",
+    calldata: CallData.compile({
+      a: aud1.low,
+      b: aud1.high,
+      c: aud2.low,
+      d: aud2.high,
+      e: 0x1,
+      recipient: toAddress,
+      amount: cairo.uint256(amount),
+    }),
+  };
+  const result = await account.execute(calls_data);
+
+  // 获取当前时间
+  const startTime = new Date().getTime();
+  // 执行交易
+  await provider.waitForTransaction(result.transaction_hash, {
+    retryInterval: 1000,
+    successStates: [TransactionStatus.ACCEPTED_ON_L2],
+  });
+  // 获取执行结束时间
+  const endTime = new Date().getTime();
+  // 计算执行时间
+  const duration = endTime - startTime;
+
+  console.log(`transfer --> 执行时间为${duration}ms`);
 
   return calls_data;
 }

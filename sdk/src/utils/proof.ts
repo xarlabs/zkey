@@ -138,6 +138,8 @@ export const createNewInputs = async (data, walletOpt, jwtClaim, public_key) => 
     modulus: rsaPubkey,
   };
 
+  console.log("inputs -->", inputs);
+
   return {
     inputs,
     jwtLength: msg.length,
@@ -153,19 +155,15 @@ export const createInputs = async (
   let { jwt: msg, sig } = data;
   const { salt, publicKey, randomness, exp } = walletOpt;
   const { issClaim, subClaim, audClaim, nonceClaim } = jwtClaim;
-  console.log("sig", sig);
   const signature = toCircomBigIntBytes(BigInt(`0x${Buffer.from(sig, "base64").toString("hex")}`));
-  console.log("signature", signature);
   const [jwtPadded, jwtPaddedLen] = await sha256Pad(
     new TextEncoder().encode(msg),
     MAX_MSG_PADDED_BYTES,
   );
-  console.log("sha256Pad");
   const jwt_padded_bytes = jwtPaddedLen.toString();
   const jwt = await Uint8ArrayToCharArray(jwtPadded);
 
   let rsaPubkey;
-  console.log("public_key -->", public_key);
   if (public_key) {
     rsaPubkey = toCircomBigIntBytes(BigInt(public_key));
   } else {
@@ -173,7 +171,6 @@ export const createInputs = async (
     rsaPubkey = response.code === 0 ? toCircomBigIntBytes(BigInt(response.data)) : "";
   }
 
-  console.log("rsaPubkey -->", rsaPubkey);
   const inputs = {
     jwt_segments: splitJWT(jwt),
     jwt_padded_bytes,

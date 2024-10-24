@@ -3,11 +3,11 @@ export default {
     {
       type: "impl",
       name: "UpgradeableImpl",
-      interface_name: "openzeppelin::upgrades::interface::IUpgradeable",
+      interface_name: "openzeppelin_upgrades::interface::IUpgradeable",
     },
     {
       type: "interface",
-      name: "openzeppelin::upgrades::interface::IUpgradeable",
+      name: "openzeppelin_upgrades::interface::IUpgradeable",
       items: [
         {
           type: "function",
@@ -26,7 +26,7 @@ export default {
     {
       type: "impl",
       name: "AccountMixinImpl",
-      interface_name: "account::account::interface::AccountABI",
+      interface_name: "zk_account::account::interface::AccountABI",
     },
     {
       type: "struct",
@@ -71,22 +71,8 @@ export default {
       ],
     },
     {
-      type: "struct",
-      name: "core::integer::u256",
-      members: [
-        {
-          name: "low",
-          type: "core::integer::u128",
-        },
-        {
-          name: "high",
-          type: "core::integer::u128",
-        },
-      ],
-    },
-    {
       type: "interface",
-      name: "account::account::interface::AccountABI",
+      name: "zk_account::account::interface::AccountABI",
       items: [
         {
           type: "function",
@@ -131,6 +117,10 @@ export default {
             {
               name: "signature",
               type: "core::array::Array::<core::felt252>",
+            },
+            {
+              name: "client_key",
+              type: "core::array::Span::<core::felt252>",
             },
           ],
           outputs: [
@@ -198,8 +188,21 @@ export default {
         },
         {
           type: "function",
-          name: "get_public_key",
-          inputs: [],
+          name: "isValidSignature",
+          inputs: [
+            {
+              name: "hash",
+              type: "core::felt252",
+            },
+            {
+              name: "signature",
+              type: "core::array::Array::<core::felt252>",
+            },
+            {
+              name: "client_key",
+              type: "core::array::Span::<core::felt252>",
+            },
+          ],
           outputs: [
             {
               type: "core::felt252",
@@ -209,19 +212,19 @@ export default {
         },
         {
           type: "function",
-          name: "set_public_key",
+          name: "get_public_key",
           inputs: [
             {
-              name: "new_public_key",
-              type: "core::felt252",
-            },
-            {
-              name: "signature",
+              name: "client_key",
               type: "core::array::Span::<core::felt252>",
             },
           ],
-          outputs: [],
-          state_mutability: "external",
+          outputs: [
+            {
+              type: "core::felt252",
+            },
+          ],
+          state_mutability: "view",
         },
         {
           type: "function",
@@ -236,79 +239,32 @@ export default {
               type: "core::felt252",
             },
             {
-              name: "issuer_public_key",
+              name: "platform",
               type: "core::felt252",
             },
             {
-              name: "issuer",
-              type: "core::felt252",
-            },
-            {
-              name: "pubSignals",
-              type: "core::array::Array::<core::felt252>",
-            },
-            {
-              name: "subhash",
-              type: "core::integer::u256",
-            },
-            {
-              name: "r",
-              type: "core::felt252",
-            },
-            {
-              name: "s",
-              type: "core::felt252",
-            },
-          ],
-          outputs: [],
-          state_mutability: "external",
-        },
-        {
-          type: "function",
-          name: "isValidSignature",
-          inputs: [
-            {
-              name: "hash",
-              type: "core::felt252",
-            },
-            {
-              name: "signature",
-              type: "core::array::Array::<core::felt252>",
-            },
-          ],
-          outputs: [
-            {
-              type: "core::felt252",
-            },
-          ],
-          state_mutability: "view",
-        },
-        {
-          type: "function",
-          name: "getPublicKey",
-          inputs: [],
-          outputs: [
-            {
-              type: "core::felt252",
-            },
-          ],
-          state_mutability: "view",
-        },
-        {
-          type: "function",
-          name: "setPublicKey",
-          inputs: [
-            {
-              name: "newPublicKey",
-              type: "core::felt252",
-            },
-            {
-              name: "signature",
+              name: "calls",
               type: "core::array::Span::<core::felt252>",
             },
           ],
           outputs: [],
           state_mutability: "external",
+        },
+        {
+          type: "function",
+          name: "getPublicKey",
+          inputs: [
+            {
+              name: "client_key",
+              type: "core::array::Span::<core::felt252>",
+            },
+          ],
+          outputs: [
+            {
+              type: "core::felt252",
+            },
+          ],
+          state_mutability: "view",
         },
       ],
     },
@@ -324,7 +280,7 @@ export default {
     },
     {
       type: "event",
-      name: "account::account::account::AccountComponent::OwnerAdded",
+      name: "zk_account::account::account::AccountComponent::OwnerAdded",
       kind: "struct",
       members: [
         {
@@ -336,7 +292,7 @@ export default {
     },
     {
       type: "event",
-      name: "account::account::account::AccountComponent::OwnerRemoved",
+      name: "zk_account::account::account::AccountComponent::OwnerRemoved",
       kind: "struct",
       members: [
         {
@@ -348,57 +304,30 @@ export default {
     },
     {
       type: "event",
-      name: "account::account::account::AccountComponent::DebugGene",
-      kind: "struct",
-      members: [
-        {
-          name: "kk",
-          type: "core::felt252",
-          kind: "key",
-        },
-        {
-          name: "si_list",
-          type: "core::array::Array::<core::felt252>",
-          kind: "data",
-        },
-        {
-          name: "si_list1",
-          type: "core::array::Array::<core::felt252>",
-          kind: "data",
-        },
-      ],
-    },
-    {
-      type: "event",
-      name: "account::account::account::AccountComponent::Event",
+      name: "zk_account::account::account::AccountComponent::Event",
       kind: "enum",
       variants: [
         {
           name: "OwnerAdded",
-          type: "account::account::account::AccountComponent::OwnerAdded",
+          type: "zk_account::account::account::AccountComponent::OwnerAdded",
           kind: "nested",
         },
         {
           name: "OwnerRemoved",
-          type: "account::account::account::AccountComponent::OwnerRemoved",
-          kind: "nested",
-        },
-        {
-          name: "DebugGene",
-          type: "account::account::account::AccountComponent::DebugGene",
+          type: "zk_account::account::account::AccountComponent::OwnerRemoved",
           kind: "nested",
         },
       ],
     },
     {
       type: "event",
-      name: "openzeppelin::introspection::src5::SRC5Component::Event",
+      name: "openzeppelin_introspection::src5::SRC5Component::Event",
       kind: "enum",
       variants: [],
     },
     {
       type: "event",
-      name: "openzeppelin::upgrades::upgradeable::UpgradeableComponent::Upgraded",
+      name: "openzeppelin_upgrades::upgradeable::UpgradeableComponent::Upgraded",
       kind: "struct",
       members: [
         {
@@ -410,34 +339,34 @@ export default {
     },
     {
       type: "event",
-      name: "openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event",
+      name: "openzeppelin_upgrades::upgradeable::UpgradeableComponent::Event",
       kind: "enum",
       variants: [
         {
           name: "Upgraded",
-          type: "openzeppelin::upgrades::upgradeable::UpgradeableComponent::Upgraded",
+          type: "openzeppelin_upgrades::upgradeable::UpgradeableComponent::Upgraded",
           kind: "nested",
         },
       ],
     },
     {
       type: "event",
-      name: "account::presets::account::AccountUpgradeable::Event",
+      name: "zk_account::presets::account::AccountUpgradeable::Event",
       kind: "enum",
       variants: [
         {
           name: "AccountEvent",
-          type: "account::account::account::AccountComponent::Event",
+          type: "zk_account::account::account::AccountComponent::Event",
           kind: "flat",
         },
         {
           name: "SRC5Event",
-          type: "openzeppelin::introspection::src5::SRC5Component::Event",
+          type: "openzeppelin_introspection::src5::SRC5Component::Event",
           kind: "flat",
         },
         {
           name: "UpgradeableEvent",
-          type: "openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event",
+          type: "openzeppelin_upgrades::upgradeable::UpgradeableComponent::Event",
           kind: "flat",
         },
       ],

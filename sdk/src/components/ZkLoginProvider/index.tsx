@@ -50,21 +50,23 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       const { publicKey, randomness, exp, privateKey } = (walletConfig as IWalletConfig) || {};
       setLoginLoading(true);
       // setLoadingContent("Getting Salt");
-      let salt = ""; //"481790905554632323806433746742638857355031021005257903843288899095303544";
+      // let salt = "481790905554632323806433746742638857355031021005257903843288899095303544";
 
       // 获取salt
-      try {
-        const res = await getSalt(jwtToken);
-        // console.log("res.data", res.data);
-        salt = res.data;
-      } catch (error) {
-        setLoginLoading(false);
-        throw new Error("get Salt error");
-      }
+      // try {
+      //   const res = await getSalt(jwtToken);
+      //   // console.log("res.data", res.data);
+      //   salt = res.data;
+      // } catch (error) {
+      //   setLoginLoading(false);
+      //   throw new Error("get Salt error");
+      // }
 
       // 解析jwt
       const jwtData = getJWTData(jwtToken);
 
+      let salt = jwtData.sub;
+      //"123"
       const jwtClaim = findJwtClaim(jwtData);
       // 解析加密数据
 
@@ -90,6 +92,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         sub,
         pub_hash,
         isDeploy,
+        param_data,
       } = await generateAccountAddress({
         privateKey,
         provider: provider.current,
@@ -120,6 +123,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         sub,
         exp,
         isDeploy,
+        callDataParams: param_data,
       };
 
       const { name, picture, email, given_name, family_name } = jwtData;

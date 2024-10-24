@@ -34,6 +34,7 @@ export interface IWalletDetail {
   salt: string;
   sub: any;
   jwtLength: number;
+  callDataParams: any;
 }
 
 export interface IZkPrivate {
@@ -42,14 +43,12 @@ export interface IZkPrivate {
 }
 
 export interface IZkState {
-  provider: {
-    current: RpcProvider;
-  };
+  provider: null | RpcProvider;
   userInfo: IUserInfo | null;
   globalAccount: AccountInterface | null;
   globalL3Account: AccountInterface | null;
   isDeploy: boolean;
-  walletDetail: IWalletDetail;
+  walletDetail: IWalletDetail | null;
   loadingContent: string;
 }
 
