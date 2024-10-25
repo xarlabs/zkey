@@ -21,7 +21,7 @@ export const getPubkey = (jwt: string) => {
   urlencoded.append("jwt", jwt);
   return http({
     method: "POST",
-    url: "http://api1.x.ar/jsserver/api/proof/getZkPubdata",
+    url: "https://api1.x.ar/jsserver/api/proof/getZkPubdata",
     data: urlencoded,
     type: "urlencoded",
   });

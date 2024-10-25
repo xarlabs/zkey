@@ -1,6 +1,6 @@
 {
   "name": "zkey-react",
-  "version": "0.1.16",
+  "version": "0.2.2",
   "description": "",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",

@@ -145,36 +145,38 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
     [walletConfig],
   );
 
+  const getNonce = async () => {
+    // 随机生成的私钥
+    const privateKey = stark.randomAddress();
+    // 对应的公钥
+    const publicKey = ec.starkCurve.getStarkKey(privateKey);
+    // 随机种子
+    const randomness = generateRandomness();
+    const dateNow = new Date().getTime();
+    // 过期时间24小时
+    const exp = Math.trunc((dateNow + 1000 * 60 * 60 * 24) / 1000).toString();
+    // 生成nonce
+
+    const nonceRes = await generateNonce(publicKey, randomness, exp);
+    setWalletConfig({
+      privateKey,
+      publicKey,
+      randomness,
+      exp,
+      nonce: nonceRes.code === 0 ? nonceRes.data : "",
+    });
+  };
+
   // 退出登录清除所有状态
-  const handleUserLogOut = useCallback(() => {
+  const handleUserLogOut = useCallback(async () => {
     setWalletDetail(null);
     setUserInfo(null);
     handleLocalStorage("remove", StorageEnum.WALLET_DETAIL);
     handleLocalStorage("remove", StorageEnum.USER_INFO);
     handleLogOutCallback && handleLogOutCallback();
+    await getNonce();
   }, [handleLogOutCallback]);
   useEffect(() => {
-    const getNonce = async () => {
-      // 随机生成的私钥
-      const privateKey = stark.randomAddress();
-      // 对应的公钥
-      const publicKey = ec.starkCurve.getStarkKey(privateKey);
-      // 随机种子
-      const randomness = generateRandomness();
-      const dateNow = new Date().getTime();
-      // 过期时间24小时
-      const exp = Math.trunc((dateNow + 1000 * 60 * 60 * 24) / 1000).toString();
-      // 生成nonce
-
-      const nonceRes = await generateNonce(publicKey, randomness, exp);
-      setWalletConfig({
-        privateKey,
-        publicKey,
-        randomness,
-        exp,
-        nonce: nonceRes.code === 0 ? nonceRes.data : "",
-      });
-    };
     const walletInit = async () => {
       // 获取本地存储的数据
       const storageWalletDetail: boolean | string | undefined = handleLocalStorage(
