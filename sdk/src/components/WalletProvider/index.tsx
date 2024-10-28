@@ -218,6 +218,47 @@ const WalletProvider = (props: IWalletProviderProps) => {
     },
     [isDeploy, transferAccount, walletDetail, activeWallet],
   );
+
+  const handleWalletDeploy = async () => {
+    if (!isDeploy) {
+      setTransferLoading(true);
+      setTransferStateText("Checking Address");
+      const checkDeploy = await checkWalletDeploy({
+        accountAddress: transferAccount.address,
+        provider,
+      });
+      if (!checkDeploy) {
+        setTransferStateText("Deploying Account");
+        const { pub_hash, callData } = walletDetail;
+        try {
+          await setWalletDeploy({
+            callData,
+            pub_hash,
+            provider: provider,
+            account: transferAccount,
+          });
+
+          handleChangeDeploy(true);
+          handleLocalStorage(
+            "set",
+            StorageEnum.WALLET_DETAIL,
+            JSON.stringify({ ...walletDetail, isDeploy: true }),
+          );
+        } catch (error) {
+          setTransferStateText("");
+          setTransferLoading(false);
+          if (error?.message?.indexOf("exceeds balance")) {
+            throw new Error("Insufficient funds to pay fee");
+          } else {
+            throw new Error("Network error Please try again later");
+          }
+        }
+      } else {
+        setTransferLoading(false);
+        setTransferStateText("");
+      }
+    }
+  };
   const handleTransfer = async (amount: number, toAddress: string) => {
     // 计算预估的总费用是否超过余额
     // 支付gas的账户是否为前钱执行转账的钱包
@@ -233,7 +274,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
     if (!TotalNum.gte(TotalGasBalance)) {
       throw new Error("Insufficient funds to pay fee");
     }
-
+    // TODO
     const { input, jwtLength, address, pub_hash, exp, publicKey, callData, callDataParams } =
       walletDetail;
     const { aud1, aud2 } = callDataParams || {};
@@ -295,10 +336,9 @@ const WalletProvider = (props: IWalletProviderProps) => {
         const isNotExpired = exp && Number(exp) - dateNow > 30;
         if (isNotExpired) {
           setTransferStateText("Getting Zero Knowledge Proof");
-          // return;
+          // TODO prood 逻辑调整
           const proof = await checkZKeyLogin(input, jwtLength);
           setTransferStateText("Setting Session Key");
-          console.log("callDataParams", callDataParams);
           try {
             await walletResetPub({
               account: transferAccount,
@@ -309,7 +349,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
           } catch (error) {
             setTransferStateText("");
             setTransferLoading(false);
-            console.log("error", error);
             if (error?.message?.indexOf("exceeds balance")) {
               throw new Error("Insufficient funds to pay fee");
             } else {

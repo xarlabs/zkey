@@ -70,17 +70,17 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       const jwtClaim = findJwtClaim(jwtData);
       // 解析加密数据
 
-      const { inputs: input, jwtLength } = await createNewInputs(
-        jwtData,
-        {
-          salt,
-          publicKey,
-          randomness,
-          exp,
-        },
-        jwtClaim,
-        public_key,
-      );
+      // const { inputs: input, jwtLength } = await createNewInputs(
+      //   jwtData,
+      //   {
+      //     salt,
+      //     publicKey,
+      //     randomness,
+      //     exp,
+      //   },
+      //   jwtClaim,
+      //   public_key,
+      // );
 
       setLoadingContent("Calculating Address");
 
@@ -117,8 +117,8 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         address: OZcontractAddress,
         callData: OZaccountConstructorCallData,
         salt: salt,
-        input,
-        jwtLength,
+        // input,
+        // jwtLength,
         pub_hash,
         sub,
         exp,

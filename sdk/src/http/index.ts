@@ -66,16 +66,6 @@ export const getProve = (input: any, jwtLength: number) =>
     };
     request.setBaseRequest(base_request);
     request.setLength(jwtLength);
-    // request.setAuthToken("");
-    // request.setCircuitTemplateId(10001);
-    // request.setInputData(input);
-    // request.setIsEncrypted(false);
-    // request.setProverId("circom");
-    // request.setProver("circom");
-    // request.setTemp("zkLogin");
-    // request.setInput(input);
-    // request.setIsEncrypted(false);
-    // request.setToCaicro(true);
     console.log("request -->", request);
     client.prove(request, {}, (err, response) => {
       if (err) {
@@ -88,18 +78,18 @@ export const getProve = (input: any, jwtLength: number) =>
     });
   });
 
-export const getGrpcProve = (input: any, jwtLength: number) => {
-  const urlencoded = new URLSearchParams();
-  urlencoded.append("input_data", input);
-  urlencoded.append("jwt_length", jwtLength);
-  return http({
-    method: "POST",
-    // url: "https://api1.x.ar/dwgo/api/api/wallet/getWalletPrices",
-    url: `https://api1.x.ar/jsserver/api/proof/rpc_proveNosha256WithWitness`,
-    data: urlencoded,
-    type: "urlencoded",
-  });
-};
+// export const getGrpcProve = (input: any, jwtLength: number) => {
+//   const urlencoded = new URLSearchParams();
+//   urlencoded.append("input_data", input);
+//   urlencoded.append("jwt_length", jwtLength);
+//   return http({
+//     method: "POST",
+//     // url: "https://api1.x.ar/dwgo/api/api/wallet/getWalletPrices",
+//     url: `https://api1.x.ar/jsserver/api/proof/rpc_proveNosha256WithWitness`,
+//     data: urlencoded,
+//     type: "urlencoded",
+//   });
+// };
 
 export const getGarage = ({ input, proof }) =>
   new Promise((resolve, reject) => {

@@ -194,6 +194,7 @@ export async function setWalletDeploy({ callData, pub_hash, provider, account })
 }
 
 export async function checkZKeyLogin(input: any, jwtLength: number) {
+  // TODO 调整逻辑
   const INPUT = JSON.stringify(input);
   let resData = null;
   let proof = "";

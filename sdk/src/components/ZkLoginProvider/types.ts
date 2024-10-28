@@ -26,14 +26,14 @@ export interface IWalletDetail {
   address: string;
   callData: string[];
   exp: string;
-  input: any;
+  // input: any;
   isDeploy: boolean;
   privateKey: string;
   pub_hash: string;
   publicKey: string;
   salt: string;
   sub: any;
-  jwtLength: number;
+  // jwtLength: number;
   callDataParams: any;
 }
 
