@@ -18,7 +18,7 @@ import { nodeUrl } from "../../config/walletConfig";
 import { generateRandomness, generateAccountAddress } from "@/utils/wallet";
 import { getJWTData, findJwtClaim, createNewInputs } from "@/utils/proof";
 import walletAbi from "@/config/walletAbi";
-import { getSalt, generateNonce } from "@/http";
+import { generateNonce } from "@/http";
 
 const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   const { children, handleLogOutCallback, handleLogInCallback } = props;
@@ -163,7 +163,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       publicKey,
       randomness,
       exp,
-      nonce: nonceRes.code === 0 ? nonceRes.data : "",
+      nonce: nonceRes,
     });
   };
 
@@ -229,14 +229,11 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
             }
           }
           handleUserLogOut();
-          getNonce();
         } catch (error) {
           handleUserLogOut();
-          getNonce();
         }
       } else {
         handleUserLogOut();
-        getNonce();
       }
     };
     walletInit();

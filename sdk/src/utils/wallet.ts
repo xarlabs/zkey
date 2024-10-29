@@ -1,6 +1,7 @@
 import { CallData, hash, Account, Contract, cairo, uint256, TransactionStatus } from "starknet";
 
-// import { buildEddsa, buildPoseidon } from "circomlibjs";
+import { buildEddsa, buildPoseidon } from "circomlibjs";
+
 import { getSubHash } from "@/http";
 
 import {
@@ -16,7 +17,7 @@ import { OZaccountClassHash } from "../config/walletConfig";
 
 import { IContractAddress } from "./type";
 
-import { getGarage, getGrpcProve } from "@/http";
+import { getGrpcAll } from "@/http";
 
 import walletAbi from "@/config/walletAbi";
 
@@ -90,14 +91,18 @@ export async function getContractAddress({
     // let eddsa = await buildEddsa();
     // const F = eddsa.babyJub.F;
     // let sub_hash = F.toObject(poseidon([subascii, salt]));
-    const subRes = await getSubHash(subascii, salt);
+    // const subRes = await getSubHash(subascii, salt);
+    let poseidon = await buildPoseidon();
+    let eddsa = await buildEddsa();
+    const F = eddsa.babyJub.F;
+    let sub_hash = F.toObject(poseidon([subascii, salt]));
 
     let param_data = {
       iss1: cairo.uint256(iss_result.firstPartAscii),
       iss2: cairo.uint256(iss_result.secondPartAscii),
       aud1: cairo.uint256(aud_result.firstPartAscii),
       aud2: cairo.uint256(aud_result.secondPartAscii),
-      sub: cairo.uint256(subRes.code === 0 ? subRes.data : ""),
+      sub: cairo.uint256(sub_hash), //subRes.code === 0 ? subRes.data : ""
     };
 
     // const audClaim = findClaimLocation(data.jwt, data.aud, MAX_ISS_BYTES);
@@ -195,27 +200,34 @@ export async function setWalletDeploy({ callData, pub_hash, provider, account })
 
 export async function checkZKeyLogin(input: any, jwtLength: number) {
   const INPUT = JSON.stringify(input);
-  let resData = null;
+  // let resData = null;
   let proof = "";
   try {
-    const res = await getGrpcProve(INPUT, jwtLength);
-    resData = res.code === 0 ? res.data : "";
+    const resData = await getGrpcAll(INPUT, jwtLength);
+    proof = resData.code === 0 ? resData.data : "";
   } catch (error) {
-    console.log("getProve error --->>> ", error);
+    console.log("getGrpcAll error -->", error);
   }
-  if (resData) {
-    const { proof_data, witness_data } = resData;
-    try {
-      proof = await getGarage({
-        input: witness_data,
-        proof: proof_data,
-      });
-    } catch (error) {
-      console.log("getGarage error --->>> ", error);
-    }
-  }
+
   return proof;
 }
+// try {
+//   const res = await getGrpcProve(INPUT, jwtLength);
+//   resData = res.code === 0 ? res.data : "";
+// } catch (error) {
+//   console.log("getProve error --->>> ", error);
+// }
+// if (resData) {
+//   const { proof_data, witness_data } = resData;
+//   try {
+//     proof = await getGarage({
+//       input: witness_data,
+//       proof: proof_data,
+//     });
+//   } catch (error) {
+//     console.log("getGarage error --->>> ", error);
+//   }
+// }
 
 export async function walletResetPub({ account, provider, accountAddress, proof }) {
   const calls = proof

@@ -1,6 +1,6 @@
 {
   "name": "zkey-react",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
@@ -22,8 +22,7 @@
     "@react-oauth/google": "^0.12.1",
     "big.js": "^6.2.2",
     "buffer": "^6.0.3",
-    "google-protobuf": "^3.21.4",
-    "grpc-web": "^1.5.0",
+    "circomlibjs": "^0.1.7",
     "jose-browser-runtime": "^5.9.6",
     "jwks-client": "^2.0.3",
     "react": "^18.0.0",
