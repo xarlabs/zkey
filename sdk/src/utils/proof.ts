@@ -115,8 +115,13 @@ export const createNewInputs = async (data, walletOpt, jwtClaim, public_key) => 
   if (public_key) {
     rsaPubkey = toCircomBigIntBytes(BigInt(public_key));
   } else {
-    const response = await getPubkey(data.jwt);
-    rsaPubkey = response.code === 0 ? toCircomBigIntBytes(BigInt(response.data)) : "";
+    // const response = await getPubkey(data.jwt);
+    // console.log("response --->", response.data);
+    // rsaPubkey = response.code === 0 ? toCircomBigIntBytes(BigInt(response.data)) : "";
+    // console.log("rsaPubkey -->", rsaPubkey);
+    const pubKeyData = await getPubkey(data.jwt);
+    rsaPubkey = toCircomBigIntBytes(BigInt(pubKeyData));
+    // console.log("rsaPubkey -->", rsaPubkey);
   }
 
   const inputs = {
@@ -146,52 +151,55 @@ export const createNewInputs = async (data, walletOpt, jwtClaim, public_key) => 
   };
 };
 
-export const createInputs = async (
-  data: ICreateInputsData,
-  walletOpt: ICreateInputsWalletOpt,
-  jwtClaim,
-  public_key,
-) => {
-  let { jwt: msg, sig } = data;
-  const { salt, publicKey, randomness, exp } = walletOpt;
-  const { issClaim, subClaim, audClaim, nonceClaim } = jwtClaim;
-  const signature = toCircomBigIntBytes(BigInt(`0x${Buffer.from(sig, "base64").toString("hex")}`));
-  const [jwtPadded, jwtPaddedLen] = await sha256Pad(
-    new TextEncoder().encode(msg),
-    MAX_MSG_PADDED_BYTES,
-  );
-  const jwt_padded_bytes = jwtPaddedLen.toString();
-  const jwt = await Uint8ArrayToCharArray(jwtPadded);
+// export const createInputs = async (
+//   data: ICreateInputsData,
+//   walletOpt: ICreateInputsWalletOpt,
+//   jwtClaim,
+//   public_key,
+// ) => {
+//   let { jwt: msg, sig } = data;
+//   const { salt, publicKey, randomness, exp } = walletOpt;
+//   const { issClaim, subClaim, audClaim, nonceClaim } = jwtClaim;
+//   const signature = toCircomBigIntBytes(BigInt(`0x${Buffer.from(sig, "base64").toString("hex")}`));
+//   const [jwtPadded, jwtPaddedLen] = await sha256Pad(
+//     new TextEncoder().encode(msg),
+//     MAX_MSG_PADDED_BYTES,
+//   );
+//   const jwt_padded_bytes = jwtPaddedLen.toString();
+//   const jwt = await Uint8ArrayToCharArray(jwtPadded);
 
-  let rsaPubkey;
-  if (public_key) {
-    rsaPubkey = toCircomBigIntBytes(BigInt(public_key));
-  } else {
-    const response = await getPubkey(data.jwt);
-    rsaPubkey = response.code === 0 ? toCircomBigIntBytes(BigInt(response.data)) : "";
-  }
+//   let rsaPubkey;
+//   if (public_key) {
+//     rsaPubkey = toCircomBigIntBytes(BigInt(public_key));
+//   } else {
+//     const response = await getPubkey(data.jwt);
+//     rsaPubkey = response.code === 0 ? toCircomBigIntBytes(BigInt(response.data)) : "";
+//     const pubKeyData = await getPubkey(data.jwt);
+//     rsaPubkey = toCircomBigIntBytes(pubKeyData);
+//     console.log("rsaPubkey -->", rsaPubkey);
+//   }
 
-  const inputs = {
-    jwt_segments: splitJWT(jwt),
-    jwt_padded_bytes,
-    iss: issClaim[0],
-    iss_loc: issClaim[1],
-    sub: subClaim[0],
-    sub_loc: subClaim[1],
-    aud: audClaim[0],
-    aud_loc: audClaim[1],
-    nonce: nonceClaim[0],
-    nonce_loc: nonceClaim[1],
-    exp,
-    //   exp_loc: expClaim[1],
-    pubkey: BigInt(publicKey).toString(),
-    randomness,
-    salt,
-    signature,
-    modulus: rsaPubkey,
-  };
+//   const inputs = {
+//     jwt_segments: splitJWT(jwt),
+//     jwt_padded_bytes,
+//     iss: issClaim[0],
+//     iss_loc: issClaim[1],
+//     sub: subClaim[0],
+//     sub_loc: subClaim[1],
+//     aud: audClaim[0],
+//     aud_loc: audClaim[1],
+//     nonce: nonceClaim[0],
+//     nonce_loc: nonceClaim[1],
+//     exp,
+//     //   exp_loc: expClaim[1],
+//     pubkey: BigInt(publicKey).toString(),
+//     randomness,
+//     salt,
+//     signature,
+//     modulus: rsaPubkey,
+//   };
 
-  console.log("inputs -->", inputs);
+//   console.log("inputs -->", inputs);
 
-  return inputs;
-};
+//   return inputs;
+// };

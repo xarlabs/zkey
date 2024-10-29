@@ -1,9 +1,12 @@
 import http from "./api";
+// import JwksClient from "jwks-client";
+import { createRemoteJWKSet, jwtVerify, exportSPKI } from "jose-browser-runtime";
 import { ProveServiceClient } from "@/config/prove_service_grpc_web_pb.js";
 import { ProveNosha256Request } from "@/config/prove_service_pb.js";
 import { GaragaServiceClient } from "@/config/garage_grpc_web_pb";
 import { GaragaRequest } from "@/config/garage_pb";
 import { IHttpResponse } from "./api.d";
+import nodeForge from "node-forge";
 
 // 获取salt
 export const getSalt = (token: string) =>
@@ -16,15 +19,73 @@ export const getSalt = (token: string) =>
   });
 
 //获取密钥
-export const getPubkey = (jwt: string) => {
-  const urlencoded = new URLSearchParams();
-  urlencoded.append("jwt", jwt);
-  return http({
-    method: "POST",
-    url: "https://api1.x.ar/jsserver/api/proof/getZkPubdata",
-    data: urlencoded,
-    type: "urlencoded",
-  });
+export const getPubkey = async (jwt: string) => {
+  // const urlencoded = new URLSearchParams();
+  // urlencoded.append("jwt", jwt);
+  // return http({
+  //   method: "POST",
+  //   url: "https://api1.x.ar/jsserver/api/proof/getZkPubdata",
+  //   data: urlencoded,
+  //   type: "urlencoded",
+  // });
+  const header = JSON.parse(atob(jwt.split(".")[0]));
+  const JWKSetObj = await createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
+  const cryptoKey = await JWKSetObj(header, jwt);
+
+  const signingKey = await exportSPKI(cryptoKey);
+  const pubKeyData = nodeForge.pki.publicKeyFromPem(signingKey);
+  return BigInt(pubKeyData.n.toString());
+
+  // const header = JSON.parse(atob(jwt.split(".")[0]));
+  // const client = new JwksClient({
+  //   jwksUri: "https://www.googleapis.com/oauth2/v3/certs", // process.env.NODE_ENV === "development" ? "http://localhost:6066/" :
+  //   // jwksUri: 'http://localhost:6066/',
+  // });
+
+  // const { payload, protectedHeader } = await jwtVerify(jwt, JWKS, {}).catch(async (error) => {
+  //   if (error?.code === "ERR_JWKS_MULTIPLE_MATCHING_KEYS") {
+  //     for await (const publicKey of error) {
+  //       try {
+  //         return await jwtVerify(jwt, publicKey, {});
+  //       } catch (innerError) {
+  //         if (innerError?.code === "ERR_JWS_SIGNATURE_VERIFICATION_FAILED") {
+  //           continue;
+  //         }
+  //         throw innerError;
+  //       }
+  //     }
+  //     // throw new jose.errors.JWSSignatureVerificationFailed();
+  //   }
+
+  //   throw error;
+  // });
+  // console.log("payload -->", payload);
+  // console.log("protectedHeader -->", protectedHeader);
+  // console.log(protectedHeader);
+  // console.log(payload);
+
+  // return payload;
+
+  try {
+    const key = client.getSigningKey(header.kid);
+    // const signingKey = key.getPublicKey();
+    // console.log("signingKey -->", signingKey);
+
+    // return signingKey;
+    // const pubKeyData = nodeForge.pki.publicKeyFromPem(signingKey);
+    // const modulus = BigInt(pubKeyData.n.toString());
+    // return NextResponse.json({ data: modulus.toString(), status: 200 });
+  } catch (error) {
+    // return NextResponse.json({ error: error, status: 500 });
+  }
+  // const urlencoded = new URLSearchParams();
+  // urlencoded.append("jwt", jwt);
+  // return http({
+  //   method: "POST",
+  //   url: "https://api1.x.ar/jsserver/api/proof/getZkPubdata",
+  //   data: urlencoded,
+  //   type: "urlencoded",
+  // });
 };
 
 // 检查是否deploy

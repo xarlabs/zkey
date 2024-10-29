@@ -1,6 +1,6 @@
 {
   "name": "zkey-react",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
@@ -24,6 +24,8 @@
     "buffer": "^6.0.3",
     "google-protobuf": "^3.21.4",
     "grpc-web": "^1.5.0",
+    "jose-browser-runtime": "^5.9.6",
+    "jwks-client": "^2.0.3",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "starknet": "^7.0.0"

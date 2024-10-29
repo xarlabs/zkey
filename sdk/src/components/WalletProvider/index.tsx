@@ -309,7 +309,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
           } catch (error) {
             setTransferStateText("");
             setTransferLoading(false);
-            console.log("error", error);
+            console.log("walletResetPub error -->", error);
             if (error?.message?.indexOf("exceeds balance")) {
               throw new Error("Insufficient funds to pay fee");
             } else {
