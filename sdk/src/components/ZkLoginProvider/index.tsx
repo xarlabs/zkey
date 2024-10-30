@@ -18,7 +18,7 @@ import { nodeUrl } from "../../config/walletConfig";
 import { generateRandomness, generateAccountAddress } from "@/utils/wallet";
 import { getJWTData, findJwtClaim, createNewInputs } from "@/utils/proof";
 import walletAbi from "@/config/walletAbi";
-import { generateNonce } from "@/http";
+import { generateNonce, getRpcPublicKey } from "@/http";
 
 const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   const { children, handleLogOutCallback, handleLogInCallback } = props;
@@ -42,6 +42,8 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   const [globalAccount, setGlobalAccount] = useState<AccountInterface | null>(null);
   // L3账号实例 通过STRK作为gas交易
   const [globalL3Account, setGlobalL3Account] = useState<AccountInterface | null>(null);
+  // rpc公钥
+  const [rpcPubKey, setRpcPubKey] = useState<any>(null);
 
   const handleLogIn = useCallback(
     async (jwtToken: string, public_key: any) => {
@@ -140,7 +142,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       setUserInfo(userInfo);
       setLoadingContent("");
       setLoginLoading(false);
-      handleLogInCallback && handleLogInCallback(userInfo);
+      handleLogInCallback && handleLogInCallback(userInfo, jwtToken);
     },
     [walletConfig],
   );
@@ -235,16 +237,22 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       } else {
         handleUserLogOut();
       }
+      // getRpcPublicKey().then((res) => {
+      //   if (res.code === 0) {
+      //     setRpcPubKey(res.data);
+      //   }
+      // });
     };
     walletInit();
   }, []);
 
   const zkPrivate = useMemo(
     () => ({
+      rpcPubKey,
       nonce: walletConfig?.nonce,
       handleLogIn,
     }),
-    [walletConfig?.nonce, handleLogIn],
+    [walletConfig?.nonce, handleLogIn, rpcPubKey],
   );
 
   const zkState: IZkState = useMemo(

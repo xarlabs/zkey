@@ -1,6 +1,6 @@
 {
   "name": "zkey-react",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
@@ -25,6 +25,7 @@
     "circomlibjs": "^0.1.7",
     "jose-browser-runtime": "^5.9.6",
     "jwks-client": "^2.0.3",
+    "node-rsa": "^1.1.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "starknet": "^7.0.0"

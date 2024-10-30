@@ -10,14 +10,14 @@ import { buildEddsa, buildPoseidon } from "circomlibjs";
 import nodeForge from "node-forge";
 
 // 获取salt
-export const getSalt = (token: string) =>
-  http({
-    method: "POST",
-    url: "https://testapi.x.ar/dwgo/api/salt/get_salt",
-    data: {
-      token,
-    },
-  });
+// export const getSalt = (token: string) =>
+//   http({
+//     method: "POST",
+//     url: "https://testapi.x.ar/dwgo/api/salt/get_salt",
+//     data: {
+//       token,
+//     },
+//   });
 
 //获取密钥
 export const getPubkey = async (jwt: string) => {
@@ -216,14 +216,22 @@ export const generateNonce = async (publicKey: string, randomness: string, exp: 
   return data;
 };
 
-export const getSubHash = async (subascii: string, salt: string) => {
-  const urlencoded = new URLSearchParams();
-  urlencoded.append("subascii", subascii);
-  urlencoded.append("salt", salt);
+// export const getSubHash = async (subascii: string, salt: string) => {
+//   const urlencoded = new URLSearchParams();
+//   urlencoded.append("subascii", subascii);
+//   urlencoded.append("salt", salt);
+//   return http({
+//     method: "POST",
+//     url: "https://api1.x.ar/jsserver/api/proof/sub_hash",
+//     data: urlencoded,
+//     type: "urlencoded",
+//   });
+// };
+
+export const getRpcPublicKey = async () => {
   return http({
     method: "POST",
-    url: "https://api1.x.ar/jsserver/api/proof/sub_hash",
-    data: urlencoded,
+    url: `https://api1.x.ar/jsserver/api/proof/rpc_get_public_key`,
     type: "urlencoded",
   });
 };

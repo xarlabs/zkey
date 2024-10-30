@@ -4,7 +4,7 @@ import { Contract, num, shortString, CallData, cairo } from "starknet";
 import Big from "big.js";
 import { WalletStateContext, WalletDispatcherContext } from "./Provider";
 export { useWalletState, useWalletDispatcher } from "./Provider";
-import { useZkState, useZkDispatcher } from "@/components/ZkLoginProvider";
+import { useZkPrivate, useZkState, useZkDispatcher } from "@/components/ZkLoginProvider";
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
 import {
   u256toWeb,
@@ -27,6 +27,7 @@ import walletAbi from "@/config/walletAbi";
 
 const WalletProvider = (props: IWalletProviderProps) => {
   const { children, currencyAddress } = props;
+  const { rpcPubKey } = useZkPrivate();
   const { globalAccount, globalL3Account, provider, isDeploy, walletDetail } = useZkState();
 
   const { handleChangeDeploy, handleUserLogOut } = useZkDispatcher();
@@ -296,7 +297,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
         if (isNotExpired) {
           setTransferStateText("Getting Zero Knowledge Proof");
           // return;
-          const proof = await checkZKeyLogin(input, jwtLength);
+          const proof = await checkZKeyLogin(rpcPubKey, input, jwtLength);
           setTransferStateText("Setting Session Key");
           console.log("callDataParams", callDataParams);
           try {

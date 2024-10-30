@@ -2,7 +2,7 @@ import { AccountInterface, RpcProvider } from "starknet";
 
 export interface IZkLoginProviderProps {
   children: React.ReactNode;
-  handleLogInCallback: (userInfo: any) => void; // 登录回调
+  handleLogInCallback: (userInfo: any, jwtToken: string) => void; // 登录回调
   handleLogOutCallback: () => void; // 登出回调
 }
 

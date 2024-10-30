@@ -2,7 +2,9 @@ import { CallData, hash, Account, Contract, cairo, uint256, TransactionStatus } 
 
 import { buildEddsa, buildPoseidon } from "circomlibjs";
 
-import { getSubHash } from "@/http";
+// const NodeRSA = require("node-rsa");
+// import NodeRSA from "node-rsa";
+// import { getSubHash } from "@/http";
 
 import {
   toBigIntBE,
@@ -17,7 +19,7 @@ import { OZaccountClassHash } from "../config/walletConfig";
 
 import { IContractAddress } from "./type";
 
-import { getGrpcAll } from "@/http";
+import { getGrpcAll, getRpcPublicKey } from "@/http";
 
 import walletAbi from "@/config/walletAbi";
 
@@ -198,8 +200,13 @@ export async function setWalletDeploy({ callData, pub_hash, provider, account })
   await provider.waitForTransaction(transaction_hash);
 }
 
-export async function checkZKeyLogin(input: any, jwtLength: number) {
+export async function checkZKeyLogin(rpcPubKey, input: any, jwtLength: number) {
   const INPUT = JSON.stringify(input);
+  // const encrypt = new NodeRSA(rpcPubKey);
+  // const encryptedData = encrypt.encrypt(INPUT);
+  // console.log("encryptedData -->", encryptedData);
+  // const publicKey = await getRpcPublicKey();
+  // console.log("publicKey -->", publicKey);
   // let resData = null;
   let proof = "";
   try {
