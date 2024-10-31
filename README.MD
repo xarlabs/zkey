@@ -11,5 +11,5 @@ zKey is a zkLogin scheme for Starknet that simplifies the onboarding process usi
 
 ## References
 
-- [snark-jwt-verify](https://github.com/TheFrozenFire/snark-jwt-verify)
-- [rooch](https://github.com/rooch-network/rooch)
+- [zkin-circuit](https://github.com/Apocentre/zkin-circuit)
+- [zk-email-verify](https://github.com/zkemail/zk-email-verify)
