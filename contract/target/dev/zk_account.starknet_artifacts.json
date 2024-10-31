@@ -1,0 +1,1 @@
+{"version":1,"contracts":[{"id":"lrsbh49esjd5m","package_name":"zk_account","contract_name":"AccountUpgradeable","module_path":"zk_account::presets::account::AccountUpgradeable","artifacts":{"sierra":"zk_account_AccountUpgradeable.contract_class.json","casm":null}}]}
