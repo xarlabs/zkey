@@ -1,13 +1,13 @@
 pragma circom 2.1.6;
 
-include "./crypto/rsa_sha256.circom";
+include "./crypto/rsa_no_sha256.circom";
 include "./jwt/claim_inclusion.circom";
 include "./utils/concat.circom";
 include "./utils/checknonce.circom";
 include "./zk-email/circuits/lib/circomlib/circuits/poseidon.circom";
 
 
-/// 1. This circuit verifies the JWT signature (RSA256) by given modulus.
+/// 1. This circuit verifies the JWT signature (RSA256) by given modulus (without sha256).
 /// 2. Ensure the encoded `iss`, `sub`, `aud`(the top 46 in plaintext), `nonce` is included in the JWT token.
 /// 3. Base64 decode the `iss`, `sub`, `aud`, `nonce` fields into ascii numbers.
 /// 4. Check `nonce` == Poseidon([pubkey, randomness, exp]).
@@ -17,7 +17,7 @@ include "./zk-email/circuits/lib/circomlib/circuits/poseidon.circom";
 ///
 /// Inputs:
 /// - `jwt_segments`: Pad the JWT and split it into multiple segments to boost efficiency.
-/// - `jwt_padded_bytes`: The length of the JWT after padding, currently defaulting to 1024.
+/// - `jwt_sha256`: The sha256 hash binary of the JWT.
 /// - `iss`: Extract the base64 byte array of the `iss` field from the JWT and pad it to `MAX_ISS_BYTES`(48).
 /// - `sub`: Extract the base64 byte array of the `sub` field from the JWT and pad it to `MAX_SUB_BYTES`(36)
 /// - `aud`: Extract the base64 byte array of the `aud` field from the JWT, taking only the first `MAX_SUB_BYTES bytes`(64) in the array
@@ -53,8 +53,7 @@ template ZKLogin(
 ){  
     // input signals
     signal input jwt_segments[chunk_count][jwt_chunk_size]; // split jwt into chunk_count chunks of jwt_chunk_size
-    signal input jwt_padded_bytes; // length of the jwt including the padding
-
+    signal input jwt_sha256[256];
     signal input iss[iss_claim_bytes];//Iss(issuer), the plaintext length is tentatively set to 34
     signal input sub[sub_claim_bytes];//Sub(subject), the plaintext length is tentatively set to 25
     signal input aud[aud_claim_bytes];//Aud (audience), only reads the first 46 bits of the plaintext length
@@ -77,9 +76,8 @@ template ZKLogin(
     signal output sub_salt_hash;// sub_salt_hash = Poseidon([sub_ascii[top 21 valid characters], salt, exp])
 
     // 1. verify the signature
-    component rsa_sha256 = RsaSha256(chunk_count, jwt_chunk_size, n, k);
-    rsa_sha256.msg_padded_bytes <== jwt_padded_bytes;
-    rsa_sha256.msg_segments <== jwt_segments;
+    component rsa_sha256 = Rsa_noSha256(n, k);
+    rsa_sha256.jwt_sha256 <== jwt_sha256;
     rsa_sha256.modulus <== modulus;
     rsa_sha256.signature <== signature;
 
@@ -220,7 +218,7 @@ template ZKLogin(
     // 2.4.1 nonce_out has "nonce_bytes" ascii numbers 
     signal nonce_out[nonce_bytes] <== ClaimInclusion(nonce_claim_bytes, nonce_bytes, jwt_chunk_size, chunk_count)(jwt_segments, nonce, nonce_loc);
 
-    //2.4.2 verify nonce=H(pubkey, randomness)
+    //2.4.2 verify nonce=H(pubkey, randomness, exp)
     //1) Since it is impossible to determine whether the length of the nonce text is 76 or 77, only the first 76 character of the nonce text are taken for comparison, and then 10 77-digit numbers are obtained through algebraic operations for comparison.
     //2) Since it is impossible to determine whether there are colon or quotes in the first two characters, the nonce can be divided into the following three situations:
     // :"nonce            There are two useless characters in front of the text of nonce
