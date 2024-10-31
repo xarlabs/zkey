@@ -1,64 +1,66 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts for Cairo v0.13.0 (account/account.cairo)
+// OpenZeppelin Contracts for Cairo v0.18.0 (account/account.cairo)
+
+#[starknet::interface]
+trait IVerify<TContractState> {
+    fn verify_groth16_proof_bn254(
+        self: @TContractState, full_proof_with_hints: Span<felt252>,
+    ) -> bool;
+}
 
 /// # Account Component
 ///
 /// The Account component enables contracts to behave as accounts.
 #[starknet::component]
-mod AccountComponent {
-    use starknet::ClassHash;
-    use starknet::syscalls::replace_class_syscall;
-    use ecdsa::check_ecdsa_signature;
+pub mod AccountComponent {
     use core::hash::{HashStateExTrait, HashStateTrait};
-    use account::account::interface;
-    use openzeppelin::account::utils::{MIN_TRANSACTION_VERSION, QUERY_VERSION, QUERY_OFFSET};
+    use core::poseidon::PoseidonTrait;
+    use zk_account::account::interface;
+    use openzeppelin::account::utils::{MIN_TRANSACTION_VERSION, QUERY_OFFSET};
     use openzeppelin::account::utils::{execute_calls, is_valid_stark_signature};
-    use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
-    use openzeppelin::introspection::src5::SRC5Component::SRC5;
-    use openzeppelin::introspection::src5::SRC5Component;
-    use poseidon::PoseidonTrait;
+    use openzeppelin_introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
+    use openzeppelin_introspection::src5::SRC5Component::SRC5Impl;
+    use openzeppelin_introspection::src5::SRC5Component;
     use starknet::account::Call;
-    use starknet::ContractAddress;
-    use starknet::get_caller_address;
-    use starknet::get_contract_address;
-    use starknet::get_tx_info;
-    use starknet::contract_address_to_felt252;
-    use integer::u128_to_felt252;
-    use integer::u128_from_felt252;
-    use integer::u64_from_felt252;
-    use alexandria_data_structures::array_ext::ArrayTraitExt;
-    use starknet::SyscallResultTrait;
+    use starknet::{get_caller_address, get_contract_address, SyscallResultTrait, ContractAddress, get_tx_info, contract_address_to_felt252};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess, Map};
+    use integer::{u128_to_felt252, u128_from_felt252, u64_from_felt252};
+    use super::{IVerifyDispatcher, IVerifyDispatcherTrait};
 
     #[storage]
-    struct Storage {
-        Account_public_key: felt252
+    pub struct Storage {
+        pub Zk_public_key: Map<felt252, felt252>
     }
 
     #[event]
     #[derive(Drop, PartialEq, starknet::Event)]
-    enum Event {
+    pub enum Event {
         OwnerAdded: OwnerAdded,
         OwnerRemoved: OwnerRemoved
     }
 
     #[derive(Drop, PartialEq, starknet::Event)]
-    struct OwnerAdded {
+    pub struct OwnerAdded {
         #[key]
-        new_owner_guid: felt252
+        pub new_owner_guid: felt252
     }
 
     #[derive(Drop, PartialEq, starknet::Event)]
-    struct OwnerRemoved {
+    pub struct OwnerRemoved {
         #[key]
-        removed_owner_guid: felt252
+        pub removed_owner_guid: felt252
     }
 
-    mod Errors {
-        const INVALID_CALLER: felt252 = 'Account: invalid caller';
-        const INVALID_SIGNATURE: felt252 = 'Account: invalid signature';
-        const INVALID_TX_VERSION: felt252 = 'Account: invalid tx version';
-        const UNAUTHORIZED: felt252 = 'Account: unauthorized';
+    pub mod Errors {
+        pub const INVALID_CALLER: felt252 = 'Account: invalid caller';
+        pub const INVALID_SIGNATURE: felt252 = 'Account: invalid signature';
+        pub const INVALID_TX_VERSION: felt252 = 'Account: invalid tx version';
+        pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
     }
+
+    //
+    // External
+    //
 
     #[embeddable_as(SRC6Impl)]
     impl SRC6<
@@ -94,7 +96,42 @@ mod AccountComponent {
                 assert(MIN_TRANSACTION_VERSION <= tx_version, Errors::INVALID_TX_VERSION);
             }
 
-            execute_calls(calls)
+            let call = calls.at(0);
+            let selector = *call.selector;
+            let mut new_calls = ArrayTrait::<Call>::new();
+            if selector != selector!("zk_set_public_key") {
+                let mut calldata = *call.calldata;
+                let mut i : u32 = 0;
+                loop {
+                    if i > 4 {
+                        break;
+                    };
+                    let _ = calldata.pop_front();
+                    i += 1;
+                };
+                let firstcall : Call = Call {
+                    to: *call.to,
+                    selector: selector,
+                    calldata: calldata,
+                };
+                new_calls.append(firstcall);
+                i = 1;
+                loop {
+                    if i >= calls.len() {
+                        break;
+                    }
+                    let tmp_call: Call = Call {
+                        to: *calls.at(i).to,
+                        selector: *calls.at(i).selector,
+                        calldata: *calls.at(i).calldata,
+                    };
+                    new_calls.append(tmp_call);
+                    i += 1;
+                }
+            } else {
+                new_calls = calls;
+            }
+            execute_calls(new_calls.span())
         }
 
         /// Verifies the validity of the signature for the current transaction.
@@ -105,15 +142,26 @@ mod AccountComponent {
             if selector == selector!("zk_set_public_key") {
                 starknet::VALIDATED
             } else {
-                self.validate_transaction()
+                let mut client_key = ArrayTrait::<felt252>::new();
+                let mut i: u32 = 0;
+                let calldata =  *call.calldata;
+                loop {
+                    if i > 4 {
+                        break;
+                    };
+                    client_key.append(*calldata.at(i));
+                    i += 1;
+                };
+                
+                self.validate_transaction(client_key.span())
             }
         }
 
         /// Verifies that the given signature is valid for the given hash.
         fn is_valid_signature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>
+            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>, client_key: Span<felt252>
         ) -> felt252 {
-            if self._is_valid_signature(hash, signature.span()) {
+            if self._is_valid_signature(hash, signature.span(), client_key) {
                 starknet::VALIDATED
             } else {
                 0
@@ -133,7 +181,8 @@ mod AccountComponent {
         fn __validate_declare__(
             self: @ComponentState<TContractState>, class_hash: felt252
         ) -> felt252 {
-            self.validate_transaction()
+            let mut data = ArrayTrait::<felt252>::new();
+            self.validate_transaction(data.span())
         }
     }
 
@@ -164,43 +213,27 @@ mod AccountComponent {
         +Drop<TContractState>
     > of interface::IPublicKey<ComponentState<TContractState>> {
         /// Returns the current public key of the account.
-        fn get_public_key(self: @ComponentState<TContractState>) -> felt252 {
-            self.Account_public_key.read()
+        fn get_public_key(self: @ComponentState<TContractState>, client_key: Span<felt252>) -> felt252 {
+            self.Zk_public_key.read(self._get_key_from_client(client_key))
         }
 
         /// Sets the public key of the account to `new_public_key`.
         ///
         /// Requirements:
         ///
-        /// - The caller must be the contract itself.
-        /// - The signature must be valid for the new owner.
+        /// - The caller checks by verify contract
         ///
         /// Emits both an `OwnerRemoved` and an `OwnerAdded` event.
-        fn set_public_key(
-            ref self: ComponentState<TContractState>,
-            new_public_key: felt252,
-            signature: Span<felt252>
-        ) {
-            self.assert_only_self();
-
-            let current_owner = self.Account_public_key.read();
-            self.assert_valid_new_owner(current_owner, new_public_key, signature);
-
-            self.emit(OwnerRemoved { removed_owner_guid: current_owner });
-            self._set_public_key(new_public_key);
-        }
-
         fn zk_set_public_key(
             ref self: ComponentState<TContractState>,
             account_pr: felt252,
             account_ch: felt252,
-            calls: Span<felt252>,  
+            platform: felt252,
+            calls: Span<felt252>,
         ) {
-            let to : ContractAddress = 0x078988a0687552b866d8293d5a6d39328a5d0cb9f51ec98c876b5ddc7191fd12.try_into().unwrap();
-            let selector = selector!("verify_groth16_proof_bn254");
-            let res = starknet::syscalls::call_contract_syscall(to, selector, calls).unwrap_syscall();
-            let res1 = *res.at(0);
-            assert(res1.into() == 1, 'verify failed');
+            let verifyContract : ContractAddress = 0x06587074696fab7568ed1650c17fdb63805e0e11995a73721fe8fa30b494f189.try_into().unwrap();
+            let verify_result = IVerifyDispatcher { contract_address: verifyContract }.verify_groth16_proof_bn254(calls);
+            assert(verify_result, 'verify failed');
 
             assert(starknet::get_block_timestamp() <= u64_from_felt252(*calls.at(43)), 'expired');
 
@@ -224,8 +257,15 @@ mod AccountComponent {
             let call_address = self._generate_address(account_pr, account_ch, data, subhash);
             assert(contract_address_to_felt252(caller) == call_address, Errors::INVALID_CALLER);
 
-            self.emit(OwnerRemoved { removed_owner_guid: self.Account_public_key.read() });
-            self.Account_public_key.write(public_key);
+            let mut arr = ArrayTrait::<felt252>::new();
+            arr.append(*calls.at(37));
+            arr.append(*calls.at(38));
+            arr.append(*calls.at(39));
+            arr.append(*calls.at(40));
+            arr.append(platform);
+            let p1 = self._get_key_from_client(arr.span());
+            self.emit(OwnerRemoved { removed_owner_guid: self.Zk_public_key.read(p1) });
+            self.Zk_public_key.write(p1, public_key);
             self.emit(OwnerAdded { new_owner_guid: public_key });
         }
     }
@@ -239,9 +279,9 @@ mod AccountComponent {
         +Drop<TContractState>
     > of interface::ISRC6CamelOnly<ComponentState<TContractState>> {
         fn isValidSignature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>
+            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>, client_key: Span<felt252>
         ) -> felt252 {
-            SRC6::is_valid_signature(self, hash, signature)
+            SRC6::is_valid_signature(self, hash, signature, client_key)
         }
     }
 
@@ -253,22 +293,95 @@ mod AccountComponent {
         +SRC5Component::HasComponent<TContractState>,
         +Drop<TContractState>
     > of interface::IPublicKeyCamel<ComponentState<TContractState>> {
-        fn getPublicKey(self: @ComponentState<TContractState>) -> felt252 {
-            self.Account_public_key.read()
+        fn getPublicKey(self: @ComponentState<TContractState>, client_key: Span<felt252>) -> felt252 {
+            self.Zk_public_key.read(self._get_key_from_client(client_key))
         }
-
-        fn setPublicKey(
-            ref self: ComponentState<TContractState>,
-            newPublicKey: felt252,
-            signature: Span<felt252>
-        ) {
-            PublicKey::set_public_key(ref self, newPublicKey, signature);
-        }
-
     }
 
+    #[embeddable_as(AccountMixinImpl)]
+    impl AccountMixin<
+        TContractState,
+        +HasComponent<TContractState>,
+        impl SRC5: SRC5Component::HasComponent<TContractState>,
+        +Drop<TContractState>
+    > of interface::AccountABI<ComponentState<TContractState>> {
+        // ISRC6
+        fn __execute__(
+            self: @ComponentState<TContractState>, calls: Array<Call>
+        ) -> Array<Span<felt252>> {
+            SRC6::__execute__(self, calls)
+        }
+
+        fn __validate__(self: @ComponentState<TContractState>, calls: Array<Call>) -> felt252 {
+            SRC6::__validate__(self, calls)
+        }
+
+        fn is_valid_signature(
+            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>, client_key: Span<felt252>
+        ) -> felt252 {
+            SRC6::is_valid_signature(self, hash, signature, client_key)
+        }
+
+        // ISRC6CamelOnly
+        fn isValidSignature(
+            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>, client_key: Span<felt252>
+        ) -> felt252 {
+            SRC6CamelOnly::isValidSignature(self, hash, signature, client_key)
+        }
+
+
+        // IDeclarer
+        fn __validate_declare__(
+            self: @ComponentState<TContractState>, class_hash: felt252
+        ) -> felt252 {
+            Declarer::__validate_declare__(self, class_hash)
+        }
+
+        // IDeployable
+        fn __validate_deploy__(
+            self: @ComponentState<TContractState>,
+            class_hash: felt252,
+            contract_address_salt: felt252,
+            public_key: felt252
+        ) -> felt252 {
+            Deployable::__validate_deploy__(self, class_hash, contract_address_salt, public_key)
+        }
+
+        // IPublicKey
+        fn get_public_key(self: @ComponentState<TContractState>, client_key: Span<felt252>) -> felt252 {
+            PublicKey::get_public_key(self, client_key)
+        }
+
+        // IPublicKeyCamel
+        fn getPublicKey(self: @ComponentState<TContractState>, client_key: Span<felt252>) -> felt252 {
+            PublicKeyCamel::getPublicKey(self, client_key)
+        }
+        
+        fn zk_set_public_key(
+            ref self: ComponentState<TContractState>,
+            account_pr: felt252,
+            account_ch: felt252,
+            platform: felt252,
+            calls: Span<felt252>,
+        ) {
+            PublicKey::zk_set_public_key(ref self, account_pr, account_ch, platform, calls);
+        }
+
+        // ISRC5
+        fn supports_interface(
+            self: @ComponentState<TContractState>, interface_id: felt252
+        ) -> bool {
+            let src5 = get_dep_component!(self, SRC5);
+            src5.supports_interface(interface_id)
+        }
+    }
+
+    //
+    // Internal
+    //
+
     #[generate_trait]
-    impl InternalImpl<
+    pub impl InternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         impl SRC5: SRC5Component::HasComponent<TContractState>,
@@ -279,7 +392,7 @@ mod AccountComponent {
         fn initializer(ref self: ComponentState<TContractState>, public_key: felt252) {
             let mut src5_component = get_dep_component_mut!(ref self, SRC5);
             src5_component.register_interface(interface::ISRC6_ID);
-            self._set_public_key(public_key);
+            src5_component.register_interface(zk_account::outside_execution::interface::SRC5_OUTSIDE_EXECUTION_V2_INTERFACE_ID);
         }
 
         /// Validates that the caller is the account itself. Otherwise it reverts.
@@ -289,59 +402,26 @@ mod AccountComponent {
             assert(self == caller, Errors::UNAUTHORIZED);
         }
 
-        /// Validates that `new_owner` accepted the ownership of the contract.
-        ///
-        /// WARNING: This function assumes that `current_owner` is the current owner of the contract, and
-        /// does not validate this assumption.
-        ///
-        /// Requirements:
-        ///
-        /// - The signature must be valid for the new owner.
-        fn assert_valid_new_owner(
-            self: @ComponentState<TContractState>,
-            current_owner: felt252,
-            new_owner: felt252,
-            signature: Span<felt252>
-        ) {
-            let message_hash = PoseidonTrait::new()
-                .update_with('StarkNet Message')
-                .update_with('accept_ownership')
-                .update_with(get_contract_address())
-                .update_with(current_owner)
-                .finalize();
-
-            let is_valid = is_valid_stark_signature(message_hash, new_owner, signature);
-            assert(is_valid, Errors::INVALID_SIGNATURE);
-        }
-
         /// Validates the signature for the current transaction.
         /// Returns the short string `VALID` if valid, otherwise it reverts.
-        fn validate_transaction(self: @ComponentState<TContractState>) -> felt252 {
+        fn validate_transaction(self: @ComponentState<TContractState>, client_key: Span<felt252>) -> felt252 {
             let tx_info = get_tx_info().unbox();
             let tx_hash = tx_info.transaction_hash;
             let signature = tx_info.signature;
-            assert(self._is_valid_signature(tx_hash, signature), Errors::INVALID_SIGNATURE);
+            assert(self._is_valid_signature(tx_hash, signature, client_key), Errors::INVALID_SIGNATURE);
             starknet::VALIDATED
-        }
-
-        /// Sets the public key without validating the caller.
-        /// The usage of this method outside the `set_public_key` function is discouraged.
-        ///
-        /// Emits an `OwnerAdded` event.
-        fn _set_public_key(ref self: ComponentState<TContractState>, new_public_key: felt252) {
-            self.Account_public_key.write(new_public_key);
-            self.emit(OwnerAdded { new_owner_guid: new_public_key });
         }
 
         /// Returns whether the given signature is valid for the given hash
         /// using the account's current public key.
         fn _is_valid_signature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
+            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>, client_key: Span<felt252>
         ) -> bool {
-            let public_key = self.Account_public_key.read();
+            let public_key = self.Zk_public_key.read(self._get_key_from_client(client_key));
             is_valid_stark_signature(hash, public_key, signature)
         }
-
+        
+        /// compute Hash On Elements
         fn _computeHashOnElements(
             self: @ComponentState<TContractState>,
             elements: Array<felt252>,
@@ -359,6 +439,7 @@ mod AccountComponent {
             pedersen::pedersen(hash, length.into())
         }
 
+        /// genenrate address to check proof pub sigal
         fn _generate_address(
             self: @ComponentState<TContractState>,
             account_pr: felt252,
@@ -389,97 +470,19 @@ mod AccountComponent {
             data1.append(callhash);
             self._computeHashOnElements(data1, 5_u32)
         }
-    }
 
-    #[embeddable_as(AccountMixinImpl)]
-    impl AccountMixin<
-        TContractState,
-        +HasComponent<TContractState>,
-        impl SRC5: SRC5Component::HasComponent<TContractState>,
-        +Drop<TContractState>
-    > of interface::AccountABI<ComponentState<TContractState>> {
-        // ISRC6
-        fn __execute__(
-            self: @ComponentState<TContractState>, calls: Array<Call>
-        ) -> Array<Span<felt252>> {
-            SRC6::__execute__(self, calls)
-        }
-
-        fn __validate__(self: @ComponentState<TContractState>, calls: Array<Call>) -> felt252 {
-            SRC6::__validate__(self, calls)
-        }
-
-        fn is_valid_signature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>
-        ) -> felt252 {
-            SRC6::is_valid_signature(self, hash, signature)
-        }
-
-        // ISRC6CamelOnly
-        fn isValidSignature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>
-        ) -> felt252 {
-            SRC6CamelOnly::isValidSignature(self, hash, signature)
-        }
-
-        // IDeclarer
-        fn __validate_declare__(
-            self: @ComponentState<TContractState>, class_hash: felt252
-        ) -> felt252 {
-            Declarer::__validate_declare__(self, class_hash)
-        }
-
-        // IDeployable
-        fn __validate_deploy__(
-            self: @ComponentState<TContractState>,
-            class_hash: felt252,
-            contract_address_salt: felt252,
-            public_key: felt252
-        ) -> felt252 {
-            Deployable::__validate_deploy__(self, class_hash, contract_address_salt, public_key)
-        }
-
-        // IPublicKey
-        fn get_public_key(self: @ComponentState<TContractState>) -> felt252 {
-            PublicKey::get_public_key(self)
-        }
-
-        fn set_public_key(
-            ref self: ComponentState<TContractState>,
-            new_public_key: felt252,
-            signature: Span<felt252>
-        ) {
-            PublicKey::set_public_key(ref self, new_public_key, signature);
-        }
-
-        // IPublicKeyCamel
-        fn getPublicKey(self: @ComponentState<TContractState>) -> felt252 {
-            PublicKeyCamel::getPublicKey(self)
-        }
-
-        fn setPublicKey(
-            ref self: ComponentState<TContractState>,
-            newPublicKey: felt252,
-            signature: Span<felt252>
-        ) {
-            PublicKeyCamel::setPublicKey(ref self, newPublicKey, signature);
-        }
-        
-        fn zk_set_public_key(
-            ref self: ComponentState<TContractState>,
-            account_pr: felt252,
-            account_ch: felt252,
-            calls: Span<felt252>,
-        ) {
-            PublicKey::zk_set_public_key(ref self, account_pr, account_ch, calls);
-        }
-
-        // ISRC5
-        fn supports_interface(
-            self: @ComponentState<TContractState>, interface_id: felt252
-        ) -> bool {
-            let src5 = get_dep_component!(self, SRC5);
-            src5.supports_interface(interface_id)
+        /// Returns the felt252 key from the span client key.
+        fn _get_key_from_client(self: @ComponentState<TContractState>, client_key: Span<felt252>) -> felt252 {
+            let mut i: u32 = 1;
+            let mut p1 = *client_key.at(0);
+            loop {
+                if i >= client_key.len() {
+                    break;
+                }
+                p1 = pedersen::pedersen(p1, *client_key.at(i));
+                i += 1;
+            };
+            p1
         }
     }
 }
