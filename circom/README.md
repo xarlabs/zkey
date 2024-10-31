@@ -52,6 +52,8 @@ This includes the Wallet Contract and Authentication Contract on Starknet. The W
 
 ## Workflow
 
+![Workflow](https://github.com/user-attachments/assets/d343b9e9-aa6c-4396-9ae2-485b26f0e9a1)
+
 ### Login Overview
 
 - During the user's first login, a public-private key pair is generated and cached locally by the frontend, and the login is completed via the zkLogin circuit.
