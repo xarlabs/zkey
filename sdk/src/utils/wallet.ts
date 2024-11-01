@@ -102,8 +102,7 @@ export async function getContractAddress({
     let param_data = {
       iss1: cairo.uint256(iss_result.firstPartAscii),
       iss2: cairo.uint256(iss_result.secondPartAscii),
-      aud1: cairo.uint256(aud_result.firstPartAscii),
-      aud2: cairo.uint256(aud_result.secondPartAscii),
+
       sub: cairo.uint256(sub_hash), //subRes.code === 0 ? subRes.data : ""
     };
 
@@ -134,7 +133,11 @@ export async function getContractAddress({
       OZaccount,
       OZcontractAddress,
       OZaccountConstructorCallData,
-      param_data,
+      param_data: {
+        ...param_data,
+        aud1: cairo.uint256(aud_result.firstPartAscii),
+        aud2: cairo.uint256(aud_result.secondPartAscii),
+      },
     };
   } catch (error) {
     console.error("Error in getContractAddress:", error);

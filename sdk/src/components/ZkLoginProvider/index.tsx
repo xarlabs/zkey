@@ -84,7 +84,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         public_key,
       );
 
-      setLoadingContent("Calculating Address");
+      // setLoadingContent("Calculating Address");
 
       // 创建钱包
       const {
