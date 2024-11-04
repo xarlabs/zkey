@@ -49,25 +49,29 @@ mod OutsideExecComponent {
 
             let tx_hash = calculate_outside_execution_hash(@outside_execution);
 
-            let mut client_key = ArrayTrait::<felt252>::new();  
+            let mut client_key = ArrayTrait::<felt252>::new();
+            let mut new_calls = ArrayTrait::<Call>::new();
             let call = outside_execution.calls.at(0);
             let selector = *call.selector;
-            let mut new_calls = ArrayTrait::<Call>::new();
             if selector != selector!("zk_set_public_key") {
                 let mut calldata = *call.calldata;
                 let mut i : u32 = 0;
+                let mut first_calldata = ArrayTrait::<felt252>::new();
                 loop {
-                    if i > 4 {
+                    if i >= calldata.len() {
                         break;
                     };
-                    client_key.append(*calldata.at(i));
-                    let _ = calldata.pop_front();
+                    if i < 5 {
+                        client_key.append(*calldata.at(i));
+                    } else {
+                        first_calldata.append(*calldata.at(i));
+                    }
                     i += 1;
                 };
                 let firstcall : Call = Call {
                     to: *call.to,
                     selector: selector,
-                    calldata: calldata,
+                    calldata: first_calldata.span(),
                 };
                 new_calls.append(firstcall);
                 i = 1;
@@ -75,39 +79,28 @@ mod OutsideExecComponent {
                     if i >= outside_execution.calls.len() {
                         break;
                     }
-                    let tmp_call: Call = Call {
-                        to: *outside_execution.calls.at(i).to,
-                        selector: *outside_execution.calls.at(i).selector,
-                        calldata: *outside_execution.calls.at(i).calldata,
-                    };
-                    new_calls.append(tmp_call);
+                    new_calls.append(*outside_execution.calls.at(i));
                     i += 1;
-                }
+                };
+                assert(
+                    self
+                        .get_contract()
+                        .is_valid_signature(
+                            tx_hash, signature, client_key.span()
+                        ) == starknet::VALIDATED,
+                    Errors::INVALID_SIG
+                );
             } else {
                 let mut i : u32 = 0;
                 loop {
                     if i >= outside_execution.calls.len() {
                         break;
                     }
-                    let tmp_call: Call = Call {
-                        to: *outside_execution.calls.at(i).to,
-                        selector: *outside_execution.calls.at(i).selector,
-                        calldata: *outside_execution.calls.at(i).calldata,
-                    };
-                    new_calls.append(tmp_call);
+                    new_calls.append(*outside_execution.calls.at(i));
                     i += 1;
                 }
             }
             
-            assert(
-                self
-                    .get_contract()
-                    .is_valid_signature(
-                        tx_hash, signature, client_key.span()
-                    ) == starknet::VALIDATED,
-                Errors::INVALID_SIG
-            );
-
             self.outside_nonces.write(outside_execution.nonce, true);
 
             execute_calls(new_calls.span())
@@ -130,7 +123,7 @@ mod OutsideExecComponent {
         let self_address = get_contract_address();
         loop {
             match calls.pop_front() {
-                Option::Some(call) => { assert(*call.to != self_address, Errors::SELF_CALL); },
+                Option::Some(call) => { assert(*call.to != self_address || *call.selector == selector!("zk_set_public_key"), Errors::SELF_CALL); },
                 Option::None(_) => { break; },
             };
         };
