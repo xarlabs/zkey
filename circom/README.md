@@ -22,7 +22,7 @@ Zero-Knowledge Proofs verify users' Web2 identities without revealing the conten
 
 ## Components
 
-### OAuth Provider (OP)
+### OAuth Provider
 
 Entities that have implemented the OpenID Connect and OAuth 2.0 protocols, including Google, Apple, and Meta. A key feature of these providers is their ability to issue signed JWTs (JSON Web Tokens) containing a set of claims used to authenticate the end user.
 
@@ -42,7 +42,7 @@ The frontend application that supports zKey is responsible for storing the sessi
 
 zKey currently generates a unique salt and stores it securely. We use Google Cloud to back up the salt and may migrate to additional servers in the future.
 
-### ZKP Service (ZeroBase)
+### ZKP Service
 
 Zero-knowledge proofs (zk-SNARKs) are used to verify the validity of the JWT and salt without revealing the content. We are currently using zk-SNARKs because they are more suitable for handling smaller proof sizes.
 
