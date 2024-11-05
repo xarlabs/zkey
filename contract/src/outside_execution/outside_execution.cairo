@@ -91,14 +91,8 @@ mod OutsideExecComponent {
                     Errors::INVALID_SIG
                 );
             } else {
-                let mut i : u32 = 0;
-                loop {
-                    if i >= outside_execution.calls.len() {
-                        break;
-                    }
-                    new_calls.append(*outside_execution.calls.at(i));
-                    i += 1;
-                }
+                assert(outside_execution.calls.len() == 1, 'must execute alone');
+                new_calls.append(*outside_execution.calls.at(0));
             }
             
             self.outside_nonces.write(outside_execution.nonce, true);
