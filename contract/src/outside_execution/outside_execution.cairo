@@ -53,7 +53,9 @@ mod OutsideExecComponent {
             let mut new_calls = ArrayTrait::<Call>::new();
             let call = outside_execution.calls.at(0);
             let selector = *call.selector;
-            if selector != selector!("zk_set_public_key") {
+            if selector == selector!("zk_set_public_key") && *call.to == get_contract_address() && outside_execution.calls.len() == 1{
+                new_calls.append(*outside_execution.calls.at(0));
+            } else {
                 let mut calldata = *call.calldata;
                 let mut i : u32 = 0;
                 let mut first_calldata = ArrayTrait::<felt252>::new();
@@ -90,9 +92,6 @@ mod OutsideExecComponent {
                         ) == starknet::VALIDATED,
                     Errors::INVALID_SIG
                 );
-            } else {
-                assert(outside_execution.calls.len() == 1, 'must execute alone');
-                new_calls.append(*outside_execution.calls.at(0));
             }
             
             self.outside_nonces.write(outside_execution.nonce, true);

@@ -129,7 +129,6 @@ pub mod AccountComponent {
                     i += 1;
                 }
             } else {
-                assert(calls.len() == 1, 'must execute alone');
                 new_calls = calls;
             }
             execute_calls(new_calls.span())
@@ -140,7 +139,7 @@ pub mod AccountComponent {
         fn __validate__(self: @ComponentState<TContractState>, mut calls: Array<Call>) -> felt252 {
             let call = calls.at(0);
             let selector = *call.selector;
-            if selector == selector!("zk_set_public_key") {
+            if selector == selector!("zk_set_public_key") && *call.to == get_contract_address() && calls.len() == 1 {
                 starknet::VALIDATED
             } else {
                 let mut client_key = ArrayTrait::<felt252>::new();
