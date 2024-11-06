@@ -221,10 +221,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
     [isDeploy, transferAccount, walletDetail, activeWallet],
   );
 
-  const eventRemove = (id: string) => {
-    setTransferList((state) => state.filter((item) => item.id !== id));
-  };
-
   // deploy 逻辑
   const handleWalletDeploy = async (
     transferData: ITransferProps,
@@ -296,9 +292,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
               state: "success",
               message: "Setting Session Key Success",
             });
-            setTimeout(() => {
-              eventRemove(transferData.id);
-            }, [5000]);
           } catch (error) {
             console.log("walletResetPub error -->", error);
             deployChangeCallback({
@@ -308,9 +301,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
                 ? "Insufficient funds to pay fee"
                 : "Network error Please try again later",
             });
-            setTimeout(() => {
-              eventRemove(transferData.id);
-            }, [5000]);
           }
         }
       } catch (error) {
@@ -389,9 +379,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
               ? "Insufficient funds to pay fee"
               : "Network error Please try again later",
           });
-          setTimeout(() => {
-            eventRemove(transferData.id);
-          }, [5000]);
           return;
         }
       } else {
@@ -431,9 +418,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
         message: "Transaction Success",
       });
       handleWalletBalance(activeWallet?.address);
-      // setTimeout(() => {
-      //   eventRemove(transferData.id);
-      // }, [5000]);
     } catch (error) {
       console.log("Transaction error -->", error);
       deployChangeCallback({
@@ -443,8 +427,16 @@ const WalletProvider = (props: IWalletProviderProps) => {
       });
     }
   };
-  const eventEndDis = (id: string) => {
-    const newTransList = transferList.filter((item) => item.id !== id);
+
+  const eventRemove = (id: string) => {
+    setTransferList((state) => state.filter((item) => item.id !== id));
+  };
+  const eventEndDis = (eventList: ITransferProps[], id: string) => {
+    const newTransList = eventList.filter((item) => item.id !== id);
+    eventManage(newTransList);
+    setTimeout(() => {
+      eventRemove(id);
+    }, 5000);
   };
   // 事件执行中心
   const eventManage = async (eventList: ITransferProps[]) => {
@@ -453,20 +445,20 @@ const WalletProvider = (props: IWalletProviderProps) => {
         // 如果有没有执行完成的任务 跳出循环
         if (eventActive.state === "running") break;
         if (eventActive.state === "pending") {
+          const changeCallback = (eventState) => {
+            const findIndex = eventList.findIndex((item) => item.id === eventActive.id);
+            eventList[findIndex] = eventState;
+            if (eventState.state === "success" || eventState.state === "error") {
+              eventEndDis(eventList, eventState.id);
+            }
+            setTransferList([...eventList]);
+          };
           switch (eventActive.event) {
             case "deploy":
-              handleWalletDeploy(eventActive, (eventState) => {
-                eventList[0] = eventState;
-                console.log("eventList", eventList);
-                setTransferList([...eventList]);
-              });
+              handleWalletDeploy(eventActive, changeCallback);
               break;
             case "transfer":
-              handleWalletTransfer(eventActive, (eventState) => {
-                eventList[0] = eventState;
-                console.log("eventList", eventList);
-                setTransferList([...eventList]);
-              });
+              handleWalletTransfer(eventActive, changeCallback);
               break;
           }
           break;
