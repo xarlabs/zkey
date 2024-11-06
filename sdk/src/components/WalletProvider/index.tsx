@@ -451,7 +451,19 @@ const WalletProvider = (props: IWalletProviderProps) => {
             if (eventState.state === "success" || eventState.state === "error") {
               eventEndDis(eventList, eventState.id);
             }
-            setTransferList([...eventList]);
+            setTransferList((state) => {
+              const findIndex = state.findIndex((item) => item.id === eventState.id);
+              if (findIndex >= 0) {
+                const copyList = [...state];
+                copyList[findIndex] = eventState;
+                if (eventState.state === "success" || eventState.state === "error") {
+                  eventEndDis(copyList, eventState.id);
+                }
+                return copyList;
+              } else {
+                return state;
+              }
+            });
           };
           switch (eventActive.event) {
             case "deploy":
