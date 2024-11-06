@@ -318,3 +318,7 @@ export const shaHash = (str) => {
 export const uint8ToBits = (uint8) => {
   return uint8.reduce((acc, byte) => acc + byte.toString(2).padStart(8, "0"), "");
 };
+
+export const genID = (length = 16): string => {
+  return Number(Math.random().toString().substr(3, length) + Date.now()).toString(36);
+};

@@ -15,7 +15,11 @@ import {
   shortNum,
 } from "./compute";
 
-import { OZaccountClassHash } from "../config/walletConfig";
+import {
+  OZaccountClassHash,
+  executorprivateKey,
+  executoraccountAddress,
+} from "../config/walletConfig";
 
 import { IContractAddress } from "./type";
 
@@ -217,6 +221,7 @@ export async function checkZKeyLogin(rpcPubKey, input: any, jwtLength: number) {
     proof = resData.code === 0 ? resData.data : "";
   } catch (error) {
     console.log("getGrpcAll error -->", error);
+    throw error;
   }
 
   return proof;
@@ -274,6 +279,64 @@ export async function walletResetPub({ account, provider, accountAddress, proof 
   console.log(`执行时间为${duration}ms`);
 
   return calls_data;
+}
+
+export async function newWalletResetPub({ account, provider, accountAddress, proof }) {
+  try {
+    const calls = proof
+      .replace(/\s/g, "") // 去除空格和换行符
+      .slice(1, -1) // 去掉数组的方括号
+      .split(",") // 按逗号分割字符串
+      .map((num) => num.trim()); // 去掉每个数字周围的空白字符
+
+    const calls_data = {
+      contractAddress: accountAddress,
+      entrypoint: "zk_set_public_key",
+      calldata: CallData.compile({
+        prefix: "0x535441524b4e45545f434f4e54524143545f41444452455353",
+        account_hash: OZaccountClassHash,
+        platform: "0x1",
+        calls: calls.slice(1),
+      }),
+    };
+    console.log("calls_data -->", calls_data);
+    const executorAccount = new Account(provider, executoraccountAddress, executorprivateKey);
+    const callOptions = {
+      caller: executorAccount.address,
+      execute_after: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
+      execute_before: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+    };
+    const outsideTransaction1 = await account.getOutsideTransaction(callOptions, calls_data);
+    console.log("outsideTransaction1 -->", outsideTransaction1);
+    const stringified = JSON.stringify(outsideTransaction1, (key, value) => {
+      if (typeof value === "bigint") {
+        return value.toString();
+      }
+      return value;
+    });
+    console.log("stringified -->", stringified);
+    return stringified;
+  } catch (error) {
+    throw error;
+  }
+
+  // const result = await account.execute(calls_data);
+
+  // // 获取当前时间
+  // const startTime = new Date().getTime();
+  // // 执行交易
+  // await provider.waitForTransaction(result.transaction_hash, {
+  //   retryInterval: 1000,
+  //   successStates: [TransactionStatus.ACCEPTED_ON_L2],
+  // });
+  // // 获取执行结束时间
+  // const endTime = new Date().getTime();
+  // // 计算执行时间
+  // const duration = endTime - startTime;
+
+  // console.log(`执行时间为${duration}ms`);
+
+  // return calls_data;
 }
 
 export async function walletResetTransfer({

@@ -46,4 +46,10 @@ export const testAddress = "0x047585f373226434a5f5c0925a4b959cd28cc741d869e212e7
 // export const OZaccountClassHash = "0x015f16375a75b6c48c6decaf81683af6c06866d28ba546c26241a30de057cba9";
 
 export const OZaccountClassHash =
-  "0x061b78d128f46c178c1d3cdaddc28a903191247750ce7c76507841faf9f21bcb";
+  "0x02bace82af26b175490401d270b12d43ea725aa7cfc6352259dcbb9b861267f9";
+
+// 执行重设公钥
+export const executorprivateKey =
+  "0x0263d912b77396cf6dab14305586cf49188eee9b11d457d1649449f09bae4e70";
+export const executoraccountAddress =
+  "0x051e601c16b4cc6e3623bf3a039e8b327ffcf6a85d37a2d52fd0f19c4b32253a";

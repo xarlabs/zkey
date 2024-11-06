@@ -8,11 +8,10 @@ import { useZkPrivate, useZkState, useZkDispatcher } from "@/components/ZkLoginP
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
 import {
   u256toWeb,
-  setWalletDeploy,
   checkZKeyLogin,
-  walletResetPub,
   walletResetTransfer,
   checkWalletDeploy,
+  newWalletResetPub,
 } from "@/utils/wallet";
 import {
   SEPOLIA_DEF_CONTRACT_ADDRESS,
@@ -20,11 +19,11 @@ import {
   WALLET_V3_ADDRESS,
   OZaccountClassHash,
 } from "@/config/walletConfig";
-import { IWalletProviderProps } from "./type";
+import { IWalletProviderProps, TWalletEvent, ITransferProps } from "./type";
 import tokenApiJson from "@/config/tokenApi";
-import { getWalletPrices } from "@/http";
+import { getWalletPrices, setOutsideDeploy, getOutsideExecute } from "@/http";
 import walletAbi from "@/config/walletAbi";
-
+import { genID } from "@/utils/compute";
 const WalletProvider = (props: IWalletProviderProps) => {
   const { children, currencyAddress } = props;
   const { rpcPubKey } = useZkPrivate();
@@ -33,6 +32,8 @@ const WalletProvider = (props: IWalletProviderProps) => {
   const { handleChangeDeploy, handleUserLogOut } = useZkDispatcher();
 
   const [walletLoading, setWalletLoading] = useState<boolean>(false);
+
+  const [transferList, setTransferList] = useState<ITransferProps[]>([]);
 
   const [transferLoading, setTransferLoading] = useState<boolean>(false);
 
@@ -219,154 +220,303 @@ const WalletProvider = (props: IWalletProviderProps) => {
     },
     [isDeploy, transferAccount, walletDetail, activeWallet],
   );
-  const handleTransfer = async (amount: number, toAddress: string) => {
-    // 计算预估的总费用是否超过余额
-    // 支付gas的账户是否为前钱执行转账的钱包
-    const isactiveGasPrice = activeWallet.address === activeGasAddress.address;
-    // 钱包余额
-    const TotalNum = new Big(activeGasBalance.balance);
-    // 需要支付的
-    const addGas = typeof gasFree === "number" ? gasFree : 0;
-    const TotalGasBalance = isactiveGasPrice
-      ? new Big(amount).plus(new Big(addGas))
-      : new Big(addGas);
 
-    if (!TotalNum.gte(TotalGasBalance)) {
-      throw new Error("Insufficient funds to pay fee");
-    }
+  const eventRemove = (id: string) => {
+    setTransferList((state) => state.filter((item) => item.id !== id));
+  };
 
-    const { input, jwtLength, address, pub_hash, exp, publicKey, callData, callDataParams } =
-      walletDetail;
-    const { aud1, aud2 } = callDataParams || {};
-    setTransferLoading(true);
-    if (!isDeploy) {
-      setTransferStateText("Checking Address");
-      const idDeploy = await checkWalletDeploy({
-        accountAddress: transferAccount.address,
-        provider,
+  // deploy 逻辑
+  const handleWalletDeploy = async (
+    transferData: ITransferProps,
+    deployChangeCallback: (eventState: ITransferProps) => void,
+  ) => {
+    const checkDeploy = await checkWalletDeploy({
+      accountAddress: transferAccount.address,
+      provider,
+    });
+    if (!checkDeploy) {
+      deployChangeCallback({
+        ...transferData,
+        state: "running",
+        message: "Deploying Account",
       });
-      console.log("idDeploy", idDeploy);
-      // const checkDeploy = res?.code === 0;
-      if (!idDeploy) {
-        setTransferStateText("Deploying Account");
-
-        try {
-          await setWalletDeploy({
-            callData,
-            pub_hash,
-            provider: provider,
-            account: transferAccount,
+      const { pub_hash, input, jwtLength, address } = walletDetail;
+      try {
+        console.time("setOutsideDeploy");
+        const [deployRes, proofRes] = await Promise.allSettled([
+          await setOutsideDeploy(pub_hash),
+          await checkZKeyLogin(rpcPubKey, input, jwtLength),
+        ]);
+        console.timeEnd("setOutsideDeploy");
+        console.log("deployRes -->", deployRes);
+        console.log("proofRes -->", proofRes);
+        if (deployRes.status === "fulfilled" && deployRes.value.code === 0) {
+          const { transaction_hash } = deployRes.value.data;
+          console.time("waitForTransaction");
+          await provider.waitForTransaction(transaction_hash);
+          console.timeEnd("waitForTransaction");
+          deployChangeCallback({
+            ...transferData,
+            state: "success",
+            message: "Deploying Success",
           });
           const isDeploy = await checkWalletDeploy({
             accountAddress: transferAccount.address,
             provider,
           });
+          // 重设deploy状态
           handleChangeDeploy(isDeploy);
           handleLocalStorage(
             "set",
             StorageEnum.WALLET_DETAIL,
             JSON.stringify({ ...walletDetail, isDeploy }),
           );
-        } catch (error) {
-          setTransferStateText("");
-          setTransferLoading(false);
-          if (error?.message?.indexOf("exceeds balance")) {
-            throw new Error("Insufficient funds to pay fee");
-          } else {
-            throw new Error("Network error Please try again later");
-          }
-        }
-      }
-    }
-    try {
-      const acountObj = new Contract(walletAbi.abi, address, provider);
-
-      const bal1 = await acountObj.get_public_key([
-        aud1.low,
-        aud1.high,
-        aud2.low,
-        aud2.high,
-        "0x1",
-      ]);
-
-      // 如果公钥不匹配则重设公司钥对
-      if (publicKey !== num.toHexString(bal1)) {
-        const dateNow = new Date().getTime() / 1000;
-        // 判断是否过期
-        const isNotExpired = exp && Number(exp) - dateNow > 30;
-        if (isNotExpired) {
-          setTransferStateText("Getting Zero Knowledge Proof");
-          // return;
-          const proof = await checkZKeyLogin(rpcPubKey, input, jwtLength);
-          setTransferStateText("Setting Session Key");
-          console.log("callDataParams", callDataParams);
+          deployChangeCallback({
+            ...transferData,
+            state: "running",
+            message: "Setting Session Key",
+          });
           try {
-            await walletResetPub({
+            const stringified = await newWalletResetPub({
               account: transferAccount,
               provider: provider,
               accountAddress: address,
-              proof,
+              proof: proofRes.value,
             });
-          } catch (error) {
-            setTransferStateText("");
-            setTransferLoading(false);
-            console.log("walletResetPub error -->", error);
-            if (error?.message?.indexOf("exceeds balance")) {
-              throw new Error("Insufficient funds to pay fee");
-            } else {
-              throw new Error("Network error Please try again later");
-            }
-          }
-        } else {
-          setTransferLoading(false);
-          setTimeout(() => {
-            handleUserLogOut();
-          }, [3000]);
-          throw new Error("Sorry, you have timed out and are about to log out");
-        }
-      }
-      try {
-        // console.log("callDataParams", callDataParams);
-        setTransferStateText("Executing Transaction");
-        await walletResetTransfer({
-          account: transferAccount,
-          accountAddress: activeContract,
-          provider: provider,
-          toAddress: toAddress,
-          callDataParams,
-          amount: BigInt(amount * 10 ** 18).toString(),
-        });
-        // 链接钱包
-        // const linkContract = new Contract(tokenApiJson.abi, activeWallet?.address, transferAccount);
-        // setTransferStateText("Executing Transaction");
-        // // 转账
-        // const respTransfer = await linkContract.transfer(
-        //   aud1.high,
-        //   aud1.low,
-        //   aud2.high,
-        //   aud2.low,
-        //   0x1,
-        //   toAddress,
-        //   BigInt(amount * 10 ** 18).toString(),
-        // );
-        // // 执行
-        // await provider.waitForTransaction(respTransfer.transaction_hash);
+            console.time("resExecute");
+            const resExecute = await getOutsideExecute(stringified);
+            console.timeEnd("resExecute");
+            const { transaction_hash } = resExecute.data;
+            console.time("resExecute waitForTransaction");
+            await provider.waitForTransaction(transaction_hash);
+            console.timeEnd("resExecute waitForTransaction");
 
-        handleWalletBalance(activeWallet?.address);
-        setTransferLoading(false);
+            deployChangeCallback({
+              ...transferData,
+              state: "success",
+              message: "Setting Session Key Success",
+            });
+            setTimeout(() => {
+              eventRemove(transferData.id);
+            }, [5000]);
+          } catch (error) {
+            console.log("walletResetPub error -->", error);
+            deployChangeCallback({
+              ...transferData,
+              state: "error",
+              message: error?.message?.indexOf("exceeds balance")
+                ? "Insufficient funds to pay fee"
+                : "Network error Please try again later",
+            });
+            setTimeout(() => {
+              eventRemove(transferData.id);
+            }, [5000]);
+          }
+        }
       } catch (error) {
-        console.log("error -->", error);
-        setTransferLoading(false);
-        throw new Error("Transfer failure Please check the entered information");
+        deployChangeCallback({
+          ...transferData,
+          state: "error",
+          message: error?.message?.indexOf("exceeds balance")
+            ? "Insufficient funds to pay fee"
+            : "Network error Please try again later",
+        });
       }
-    } catch (error) {
-      console.log("error        !", error);
-      setTransferLoading(false);
-      throw error;
     }
   };
 
+  const handleWalletTransfer = async (
+    transferData: ITransferProps,
+    deployChangeCallback: (eventState: ITransferProps) => void,
+  ) => {
+    const { input, jwtLength, address, exp, publicKey, callDataParams } = walletDetail;
+    const { aud1, aud2 } = callDataParams || {};
+    const accountObj = new Contract(walletAbi.abi, address, provider);
+    deployChangeCallback({
+      ...transferData,
+      state: "running",
+      message: "check publicKey",
+      event: "resetPub",
+    });
+
+    const accountPublicKey = await accountObj.get_public_key([
+      aud1.low,
+      aud1.high,
+      aud2.low,
+      aud2.high,
+      "0x1",
+    ]);
+    // 查看是否需要重设公私钥
+    if (publicKey !== num.toHexString(accountPublicKey)) {
+      const dateNow = new Date().getTime() / 1000;
+      // 判断是否过期
+      const isNotExpired = exp && Number(exp) - dateNow > 30;
+      if (isNotExpired) {
+        deployChangeCallback({
+          ...transferData,
+          state: "running",
+          message: "Getting Zero Knowledge Proof",
+        });
+        // return;
+        const proof = await checkZKeyLogin(rpcPubKey, input, jwtLength);
+        console.log("proof", proof);
+        try {
+          const stringified = await newWalletResetPub({
+            account: transferAccount,
+            provider: provider,
+            accountAddress: address,
+            proof: proof,
+          });
+          console.time("resExecute");
+          const resExecute = await getOutsideExecute(stringified);
+          console.timeEnd("resExecute");
+          const { transaction_hash } = resExecute.data;
+          console.time("resExecute waitForTransaction");
+          await provider.waitForTransaction(transaction_hash);
+          console.timeEnd("resExecute waitForTransaction");
+
+          deployChangeCallback({
+            ...transferData,
+            state: "success",
+            message: "Setting Session Key Success",
+          });
+        } catch (error) {
+          console.log("walletResetPub error -->", error);
+          deployChangeCallback({
+            ...transferData,
+            state: "error",
+            message: error?.message?.indexOf("exceeds balance")
+              ? "Insufficient funds to pay fee"
+              : "Network error Please try again later",
+          });
+          setTimeout(() => {
+            eventRemove(transferData.id);
+          }, [5000]);
+          return;
+        }
+      } else {
+        // 失效登出
+        deployChangeCallback({
+          ...transferData,
+          state: "error",
+          message: "Sorry, you have timed out and are about to log out",
+        });
+        setTimeout(() => {
+          setTransferList([]);
+          handleUserLogOut();
+        }, [5000]);
+        return;
+      }
+    }
+    try {
+      // console.log("callDataParams", callDataParams);
+      deployChangeCallback({
+        ...transferData,
+        state: "running",
+        message: "Executing Transaction",
+        event: "transfer",
+      });
+      const { amount, toAddress } = transferData;
+      await walletResetTransfer({
+        account: transferAccount,
+        accountAddress: activeContract,
+        provider: provider,
+        toAddress: toAddress,
+        callDataParams,
+        amount: BigInt(amount * 10 ** 18).toString(),
+      });
+      deployChangeCallback({
+        ...transferData,
+        state: "success",
+        message: "Transaction Success",
+      });
+      handleWalletBalance(activeWallet?.address);
+      // setTimeout(() => {
+      //   eventRemove(transferData.id);
+      // }, [5000]);
+    } catch (error) {
+      console.log("Transaction error -->", error);
+      deployChangeCallback({
+        ...transferData,
+        state: "error",
+        message: "Transfer failure Please check the entered information",
+      });
+    }
+  };
+  const eventEndDis = (id: string) => {
+    const newTransList = transferList.filter((item) => item.id !== id);
+  };
+  // 事件执行中心
+  const eventManage = async (eventList: ITransferProps[]) => {
+    if (eventList.length > 0) {
+      for (const eventActive of eventList) {
+        // 如果有没有执行完成的任务 跳出循环
+        if (eventActive.state === "running") break;
+        if (eventActive.state === "pending") {
+          switch (eventActive.event) {
+            case "deploy":
+              handleWalletDeploy(eventActive, (eventState) => {
+                eventList[0] = eventState;
+                console.log("eventList", eventList);
+                setTransferList([...eventList]);
+              });
+              break;
+            case "transfer":
+              handleWalletTransfer(eventActive, (eventState) => {
+                eventList[0] = eventState;
+                console.log("eventList", eventList);
+                setTransferList([...eventList]);
+              });
+              break;
+          }
+          break;
+        }
+      }
+    }
+  };
+  // 事件分发
+  const eventTrigger = async (event: TWalletEvent, data?: any) => {
+    const transferData: ITransferProps = {
+      id: genID(),
+      state: "pending",
+    };
+    switch (event) {
+      // 处理deploy 事件
+      case "deploy":
+        transferData.message = "waiting deploying";
+        transferData.event = "deploy";
+        break;
+      case "transfer":
+        const { amount, toAddress } = data || {};
+        transferData.message = "waiting transferring";
+        transferData.event = "transfer";
+        transferData.amount = amount;
+        transferData.toAddress = toAddress;
+        break;
+      default:
+        break;
+    }
+    setTransferList((state) => {
+      if (!state.map((_) => _.id).includes(transferData.id)) {
+        const newList = [...state, transferData];
+        console.log("newList", newList);
+        eventManage(newList);
+        return newList;
+      } else {
+        return state;
+      }
+    });
+  };
+
+  const handleTransfer = (amount: number, toAddress: string) => {
+    eventTrigger("transfer", {
+      amount,
+      toAddress,
+    });
+  };
+
   useEffect(() => {
+    let isFirst = false;
     const getAccountBalance = async () => {
       setWalletLoading(true);
       let addressList = currencyAddress || SEPOLIA_DEF_CONTRACT_ADDRESS;
@@ -417,10 +567,18 @@ const WalletProvider = (props: IWalletProviderProps) => {
       setWalletLoading(false);
     };
 
-    if (globalAccount?.address) {
+    if (globalAccount?.address && !isFirst) {
+      isFirst = true;
+      console.log("globalAccount?.address", globalAccount?.address);
       getAccountBalance();
+      if (!isDeploy) {
+        eventTrigger("deploy");
+      }
     }
-  }, [queryContractData, globalAccount?.address]);
+    return () => {
+      isFirst = false;
+    };
+  }, [queryContractData, globalAccount?.address, isDeploy]);
 
   const walletState = useMemo(() => {
     return {
@@ -435,6 +593,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
       totalPrice,
       transferLoading,
       transferStateText,
+      transferList,
     };
   }, [
     walletLoading,
@@ -448,6 +607,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
     totalPrice,
     transferLoading,
     transferStateText,
+    transferList,
   ]);
 
   const walletDispatcher = useMemo(() => {

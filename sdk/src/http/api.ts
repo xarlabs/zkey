@@ -1,6 +1,7 @@
 import { IHttpParams, IResOption, HeaderTypeEnum, IHttpResponse } from "./api.d";
 
-const BASE_API_URL = "https://api1.x.ar/dwgo/api";
+const BASE_API_URL = "https://api1.x.ar";
+
 function http(obj: IHttpParams) {
   let { method, url, params, data, headers = {}, type } = obj;
 

@@ -119,8 +119,11 @@ export const createNewInputs = async (data, walletOpt, jwtClaim, public_key) => 
     // console.log("response --->", response.data);
     // rsaPubkey = response.code === 0 ? toCircomBigIntBytes(BigInt(response.data)) : "";
     // console.log("rsaPubkey -->", rsaPubkey);
+    console.log("jwt -->", data.jwt);
     const pubKeyData = await getPubkey(data.jwt);
+    console.log("pubKeyData -->", pubKeyData);
     rsaPubkey = toCircomBigIntBytes(BigInt(pubKeyData));
+    console.log("rsaPubkey -->", rsaPubkey);
     // console.log("rsaPubkey -->", rsaPubkey);
   }
 
