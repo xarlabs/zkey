@@ -19,6 +19,7 @@ pragma circom 2.1.6;
 
 // only converts ascii to numbers from 0-9
 // for now, this circuit seems don't need to handle negative numbers
+// Out-of-range values are not considered, as the witness cannot pass.
 template AsciiToNum (max_input) {
   signal input in[max_input];
   signal output out;

@@ -38,11 +38,11 @@ template RSAVerifier65537(n, k) {
         bigPow.modulus[i] <== modulus[i];
     }
 
-    for (var i = 0; i < k; i++) {
-        log("i is ",i);
-        log("bigPow.out[i]",bigPow.out[i]);
-        log("padder.out[i]",padder.out[i]);
-    }
+    // for (var i = 0; i < k; i++) {
+    //     log("i is ",i);
+    //     log("bigPow.out[i]",bigPow.out[i]);
+    //     log("padder.out[i]",padder.out[i]);
+    // }
 
     // By construction of the padding, the padded message is necessarily
     // smaller than the modulus. Thus, we don't have to check that bigPow is fully reduced.

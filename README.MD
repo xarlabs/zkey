@@ -9,7 +9,3 @@ zKey is a zkLogin scheme for Starknet that simplifies the onboarding process usi
   - `zk_account`: Account Contract. Please read [readme](https://github.com/xarlabs/zkey/blob/main/contract/zk_account/README.md).
 - `circom`: Please read [readme](https://github.com/xarlabs/zkey/blob/main/circom/README.md).
 
-## References
-
-- [snark-jwt-verify](https://github.com/TheFrozenFire/snark-jwt-verify)
-- [rooch](https://github.com/rooch-network/rooch)

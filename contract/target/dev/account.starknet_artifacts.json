@@ -1,1 +1,0 @@
-{"version":1,"contracts":[{"id":"eo40vcghge82e","package_name":"account","contract_name":"AccountUpgradeable","module_path":"account::presets::account::AccountUpgradeable","artifacts":{"sierra":"account_AccountUpgradeable.contract_class.json","casm":null}}]}
