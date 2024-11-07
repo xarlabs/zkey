@@ -209,12 +209,6 @@ export async function setWalletDeploy({ callData, pub_hash, provider, account })
 
 export async function checkZKeyLogin(rpcPubKey, input: any, jwtLength: number) {
   const INPUT = JSON.stringify(input);
-  // const encrypt = new NodeRSA(rpcPubKey);
-  // const encryptedData = encrypt.encrypt(INPUT);
-  // console.log("encryptedData -->", encryptedData);
-  // const publicKey = await getRpcPublicKey();
-  // console.log("publicKey -->", publicKey);
-  // let resData = null;
   let proof = "";
   try {
     const resData = await getGrpcAll(INPUT, jwtLength);
@@ -226,23 +220,6 @@ export async function checkZKeyLogin(rpcPubKey, input: any, jwtLength: number) {
 
   return proof;
 }
-// try {
-//   const res = await getGrpcProve(INPUT, jwtLength);
-//   resData = res.code === 0 ? res.data : "";
-// } catch (error) {
-//   console.log("getProve error --->>> ", error);
-// }
-// if (resData) {
-//   const { proof_data, witness_data } = resData;
-//   try {
-//     proof = await getGarage({
-//       input: witness_data,
-//       proof: proof_data,
-//     });
-//   } catch (error) {
-//     console.log("getGarage error --->>> ", error);
-//   }
-// }
 
 export async function walletResetPub({ account, provider, accountAddress, proof }) {
   const calls = proof
@@ -319,24 +296,6 @@ export async function newWalletResetPub({ account, provider, accountAddress, pro
   } catch (error) {
     throw error;
   }
-
-  // const result = await account.execute(calls_data);
-
-  // // 获取当前时间
-  // const startTime = new Date().getTime();
-  // // 执行交易
-  // await provider.waitForTransaction(result.transaction_hash, {
-  //   retryInterval: 1000,
-  //   successStates: [TransactionStatus.ACCEPTED_ON_L2],
-  // });
-  // // 获取执行结束时间
-  // const endTime = new Date().getTime();
-  // // 计算执行时间
-  // const duration = endTime - startTime;
-
-  // console.log(`执行时间为${duration}ms`);
-
-  // return calls_data;
 }
 
 export async function walletResetTransfer({

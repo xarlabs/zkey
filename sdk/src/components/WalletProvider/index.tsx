@@ -35,10 +35,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
 
   const [transferList, setTransferList] = useState<ITransferProps[]>([]);
 
-  const [transferLoading, setTransferLoading] = useState<boolean>(false);
-
-  const [transferStateText, setTransferStateText] = useState<string>("");
-
   const [currencyList, setCurrencyList] = useState([]);
 
   const [activeContract, handleChangeActiveContract] = useState<string>("");
@@ -253,7 +249,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
           console.timeEnd("waitForTransaction");
           deployChangeCallback({
             ...transferData,
-            state: "success",
+            state: "running",
             message: "Deploying Success",
           });
           const isDeploy = await checkWalletDeploy({
@@ -315,7 +311,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
     }
   };
 
-  const handleWalletTransfer = async (
+  const handleWalletResetPub = async (
     transferData: ITransferProps,
     deployChangeCallback: (eventState: ITransferProps) => void,
   ) => {
@@ -389,14 +385,21 @@ const WalletProvider = (props: IWalletProviderProps) => {
           message: "Sorry, you have timed out and are about to log out",
         });
         setTimeout(() => {
-          setTransferList([]);
           handleUserLogOut();
         }, [5000]);
         return;
       }
     }
+  };
+
+  const handleWalletTransfer = async (
+    transferData: ITransferProps,
+    deployChangeCallback: (eventState: ITransferProps) => void,
+  ) => {
+    await handleWalletResetPub(transferData, deployChangeCallback);
+    const { callDataParams } = walletDetail;
+
     try {
-      // console.log("callDataParams", callDataParams);
       deployChangeCallback({
         ...transferData,
         state: "running",
@@ -469,6 +472,9 @@ const WalletProvider = (props: IWalletProviderProps) => {
             case "deploy":
               handleWalletDeploy(eventActive, changeCallback);
               break;
+            case "resetPub":
+              handleWalletResetPub(eventActive, changeCallback);
+              break;
             case "transfer":
               handleWalletTransfer(eventActive, changeCallback);
               break;
@@ -483,17 +489,19 @@ const WalletProvider = (props: IWalletProviderProps) => {
     const transferData: ITransferProps = {
       id: genID(),
       state: "pending",
+      event: event,
     };
     switch (event) {
       // 处理deploy 事件
       case "deploy":
         transferData.message = "waiting deploying";
-        transferData.event = "deploy";
+        break;
+      case "resetPub":
+        transferData.message = "waiting resetPub";
         break;
       case "transfer":
         const { amount, toAddress } = data || {};
         transferData.message = "waiting transferring";
-        transferData.event = "transfer";
         transferData.amount = amount;
         transferData.toAddress = toAddress;
         break;
@@ -511,7 +519,13 @@ const WalletProvider = (props: IWalletProviderProps) => {
       }
     });
   };
+  const handleDeploy = () => {
+    eventTrigger("deploy");
+  };
 
+  const handleResetPub = () => {
+    eventTrigger("resetPub");
+  };
   const handleTransfer = (amount: number, toAddress: string) => {
     eventTrigger("transfer", {
       amount,
@@ -595,8 +609,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
       activeWalletGas: gasFree,
       activeGasPrice,
       totalPrice,
-      transferLoading,
-      transferStateText,
       transferList,
     };
   }, [
@@ -609,8 +621,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
     gasFree,
     activeGasPrice,
     totalPrice,
-    transferLoading,
-    transferStateText,
     transferList,
   ]);
 
@@ -621,6 +631,8 @@ const WalletProvider = (props: IWalletProviderProps) => {
       handleWalletBalance,
       handleChangActiveGasAddress,
       handleGetGasFree,
+      handleDeploy,
+      handleResetPub,
       handleTransfer,
     };
   }, [
@@ -629,6 +641,8 @@ const WalletProvider = (props: IWalletProviderProps) => {
     handleWalletBalance,
     handleChangActiveGasAddress,
     handleGetGasFree,
+    handleDeploy,
+    handleResetPub,
     handleTransfer,
   ]);
 

@@ -67,9 +67,9 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       // 解析jwt
       const jwtData = getJWTData(jwtToken);
 
-      let salt = 2955; //parseInt((Math.random() * 10000).toString()); // jwtData.sub;
+      let salt = jwtData.sub; //parseInt((Math.random() * 1000000).toString()); // jwtData.sub;
 
-      //"123"
+      //"123" 2955
       const jwtClaim = findJwtClaim(jwtData);
       // 解析加密数据
 
