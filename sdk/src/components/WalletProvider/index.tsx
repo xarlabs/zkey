@@ -363,7 +363,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
 
           deployChangeCallback({
             ...transferData,
-            state: "success",
+            state: "running",
             message: "Setting Session Key Success",
           });
         } catch (error) {
