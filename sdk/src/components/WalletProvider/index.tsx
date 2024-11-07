@@ -308,6 +308,12 @@ const WalletProvider = (props: IWalletProviderProps) => {
             : "Network error Please try again later",
         });
       }
+    } else {
+      deployChangeCallback({
+        ...transferData,
+        state: "success",
+        message: "Deploying Success",
+      });
     }
   };
 
