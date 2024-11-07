@@ -526,7 +526,20 @@ const WalletProvider = (props: IWalletProviderProps) => {
   const handleResetPub = () => {
     eventTrigger("resetPub");
   };
-  const handleTransfer = (amount: number, toAddress: string) => {
+  const handleTransfer = async (amount: number, toAddress: string) => {
+    // 计算预估的总费用是否超过余额
+    // 支付gas的账户是否为前钱执行转账的钱包
+    const isactiveGasPrice = activeWallet.address === activeGasAddress.address;
+    // 钱包余额
+    const TotalNum = new Big(activeGasBalance.balance);
+    // 需要支付的
+    const addGas = typeof gasFree === "number" ? gasFree : 0;
+    const TotalGasBalance = isactiveGasPrice
+      ? new Big(amount).plus(new Big(addGas))
+      : new Big(addGas);
+    if (!TotalNum.gte(TotalGasBalance)) {
+      throw new Error("Insufficient funds to pay fee");
+    }
     eventTrigger("transfer", {
       amount,
       toAddress,
