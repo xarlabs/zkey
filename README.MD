@@ -5,6 +5,10 @@ zKey is the zkLogin on Starknet, a self-custodial wallet using zero-knowledge pr
 Try now: zkey.org
 
 # The Architecture of zKey
+<p align="center">
+  < img src="https://github.com/xarlabs/zkey/blob/main/~assets/Image/zKey%20Flowchart.jpg
+" alt="Starknet.unity logo" width="200px"/>
+</p >
 
 ## Get JWT As The Certificate
 
