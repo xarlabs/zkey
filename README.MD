@@ -18,6 +18,7 @@ In the process of zKey, the OP(OAuth Provider) is utilized as a certificate auth
 2. OP login
 
 2.1 User goes through OP’s login flow and passes in the `nonce`. 
+
 2.2 Upon successful authentication, the frontend gets a JWT, denoted as `jwt` , from the OP. The `jwt` serves as a certificate for `pub_k`, confirming that the owner of `pri_k` is indeed the user identified by OP.
 
 ## Get Wallet Address
@@ -35,6 +36,7 @@ We currently utilize a zKey Prover to generate the proof, as the computation mig
 4. Get proof
 
 4.1 The frontend passes `jwt`, `OP_k`(OP’s public key), `pub_k`, `random1` to the Prover to generate a proof. The frontend also passes `iss`, `sub`, `aud`, `nonce`that can be parsed from `jwt` to help the Prover verify all the inputs.
+
 4.2 The Prover returns a proof and public signals including  `assic(sub)`,`assic(iss)`, `assic(aud)`, `exp`, `pub_k`. Additionally,`sub` ,`iss` and `aud` are converted to`assic(sub)`,  `ascii(iss)` and `ascii(aud)` as it's the only format the circuit can handle.
 
 ## Submit Transaction
@@ -46,6 +48,7 @@ Since zKey is built on Starknet, which natively supports smart contract wallets,
 6. Verify
 
 6.1 Once verified, the Wallet Contract calls the Verifier Contract to validate the proof and public signals. 
+
 6.2 The Verifier returns Yes or No.
 
 7. Upon successful verification, `pub_k` is written into the contract, and the user only needs to sign with `pri_k` for future transactions. When users need to reset the session keys(this occurs in scenarios such as when they lose their keys), the same process applies, and the old `pub_k` will be overwritten with the new `pub_k`. As long as they retain the OP's account they can retrieve the same address and reset their key pair at any time.
