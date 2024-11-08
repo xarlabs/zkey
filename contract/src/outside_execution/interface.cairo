@@ -11,8 +11,8 @@ const SRC5_OUTSIDE_EXECUTION_V2_INTERFACE_ID: felt252 =
 struct OutsideExecution {
     caller: ContractAddress,
     nonce: felt252,
-    execute_after: u64,
-    execute_before: u64,
+    execute_after: u128,
+    execute_before: u128,
     calls: Span<Call>
 }
 

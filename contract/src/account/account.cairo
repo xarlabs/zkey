@@ -24,8 +24,8 @@ pub mod AccountComponent {
     use starknet::account::Call;
     use starknet::{get_caller_address, get_contract_address, SyscallResultTrait, ContractAddress, get_tx_info, contract_address_to_felt252};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess, Map};
-    use integer::{u128_to_felt252, u128_from_felt252, u64_from_felt252};
     use super::{IVerifyDispatcher, IVerifyDispatcherTrait};
+    use integer::{u128_to_felt252, u128_from_felt252, u64_from_felt252};
 
     #[storage]
     pub struct Storage {
@@ -139,7 +139,7 @@ pub mod AccountComponent {
         fn __validate__(self: @ComponentState<TContractState>, mut calls: Array<Call>) -> felt252 {
             let call = calls.at(0);
             let selector = *call.selector;
-            if selector == selector!("zk_set_public_key") {
+            if selector == selector!("zk_set_public_key") && *call.to == get_contract_address() && calls.len() == 1 {
                 starknet::VALIDATED
             } else {
                 let mut client_key = ArrayTrait::<felt252>::new();
@@ -252,7 +252,6 @@ pub mod AccountComponent {
             };
             let public_key :felt252 = u_public_key.try_into().unwrap();
     
-            let mut _data = data.clone();
             let caller = get_caller_address();
             let call_address = self._generate_address(account_pr, account_ch, data, subhash);
             assert(contract_address_to_felt252(caller) == call_address, Errors::INVALID_CALLER);
