@@ -336,5 +336,5 @@ export async function walletResetTransfer({
 
   console.log(`transfer --> 执行时间为${duration}ms`);
 
-  return calls_data;
+  return result.transaction_hash;
 }

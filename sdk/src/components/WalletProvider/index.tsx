@@ -24,8 +24,9 @@ import tokenApiJson from "@/config/tokenApi";
 import { getWalletPrices, setOutsideDeploy, getOutsideExecute } from "@/http";
 import walletAbi from "@/config/walletAbi";
 import { genID } from "@/utils/compute";
+import ETH from "Assets/images/ETH.png";
 const WalletProvider = (props: IWalletProviderProps) => {
-  const { children, currencyAddress } = props;
+  const { children, currencyAddress, handleTransferCallBack } = props;
   const { rpcPubKey } = useZkPrivate();
   const { globalAccount, globalL3Account, provider, isDeploy, walletDetail } = useZkState();
 
@@ -116,6 +117,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
           newContract["sum"] = new Big(newContract["balance"])
             .times(new Big(newContract["prices"]))
             .toNumber();
+          newContract["ico"] = ETH; // "Assets/images/" + newContract["walletName"] + ".png";
           resolve(newContract);
         } catch (error) {
           console.log("queryContractData", error);
@@ -401,6 +403,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
   const handleWalletTransfer = async (
     transferData: ITransferProps,
     deployChangeCallback: (eventState: ITransferProps) => void,
+    finishCallBack?: (data: any) => void,
   ) => {
     await handleWalletResetPub(transferData, deployChangeCallback);
     const { callDataParams } = walletDetail;
@@ -413,7 +416,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
         event: "transfer",
       });
       const { amount, toAddress } = transferData;
-      await walletResetTransfer({
+      const transaction_hash = await walletResetTransfer({
         account: transferAccount,
         accountAddress: activeContract,
         provider: provider,
@@ -426,6 +429,16 @@ const WalletProvider = (props: IWalletProviderProps) => {
         state: "success",
         message: "Transaction Success",
       });
+      finishCallBack &&
+        finishCallBack({
+          date: new Date().getTime(),
+          address: toAddress,
+          amount: amount,
+          // show_usd:transferAccount.
+          name: activeWallet.walletName,
+          prices: activeWallet.prices,
+          transaction_hash,
+        });
       handleWalletBalance(activeWallet?.address);
     } catch (error) {
       console.log("Transaction error -->", error);
@@ -448,7 +461,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
     }, 5000);
   };
   // 事件执行中心
-  const eventManage = async (eventList: ITransferProps[]) => {
+  const eventManage = async (eventList: ITransferProps[], finishCallBack?: (data: any) => void) => {
     if (eventList.length > 0) {
       for (const eventActive of eventList) {
         // 如果有没有执行完成的任务 跳出循环
@@ -482,7 +495,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
               handleWalletResetPub(eventActive, changeCallback);
               break;
             case "transfer":
-              handleWalletTransfer(eventActive, changeCallback);
+              handleWalletTransfer(eventActive, changeCallback, finishCallBack);
               break;
           }
           break;
@@ -491,7 +504,11 @@ const WalletProvider = (props: IWalletProviderProps) => {
     }
   };
   // 事件分发
-  const eventTrigger = async (event: TWalletEvent, data?: any) => {
+  const eventTrigger = async (
+    event: TWalletEvent,
+    data?: any,
+    finishCallBack?: (data: any) => void,
+  ) => {
     const transferData: ITransferProps = {
       id: genID(),
       state: "pending",
@@ -518,7 +535,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
       if (!state.map((_) => _.id).includes(transferData.id)) {
         const newList = [...state, transferData];
         console.log("newList", newList);
-        eventManage(newList);
+        eventManage(newList, finishCallBack);
         return newList;
       } else {
         return state;
@@ -532,12 +549,17 @@ const WalletProvider = (props: IWalletProviderProps) => {
   const handleResetPub = () => {
     eventTrigger("resetPub");
   };
-  const handleTransfer = async (amount: number, toAddress: string) => {
+  const handleTransfer = async (
+    transData: { amount: number; toAddress: string },
+    transCallBack?: (data: any) => void,
+  ) => {
+    const { amount, toAddress } = transData;
     // 计算预估的总费用是否超过余额
     // 支付gas的账户是否为前钱执行转账的钱包
     const isactiveGasPrice = activeWallet.address === activeGasAddress.address;
     // 钱包余额
-    const TotalNum = new Big(activeGasBalance.balance);
+    console.log("activeGasBalance", activeGasBalance);
+    const TotalNum = new Big(activeGasBalance.balance, amount);
     // 需要支付的
     const addGas = typeof gasFree === "number" ? gasFree : 0;
     const TotalGasBalance = isactiveGasPrice
@@ -546,10 +568,14 @@ const WalletProvider = (props: IWalletProviderProps) => {
     if (!TotalNum.gte(TotalGasBalance)) {
       throw new Error("Insufficient funds to pay fee");
     }
-    eventTrigger("transfer", {
-      amount,
-      toAddress,
-    });
+    eventTrigger(
+      "transfer",
+      {
+        amount,
+        toAddress,
+      },
+      transCallBack,
+    );
   };
 
   useEffect(() => {

@@ -12,6 +12,7 @@ module.exports = {
     alias: {
       // 定义 import 引用时的别名
       "@": path.resolve(__dirname, "../src"),
+      Assets: path.resolve(__dirname, "../assets"),
     },
 
     // 定义 import 引用时可省略的文件后缀名
