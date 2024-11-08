@@ -6,7 +6,7 @@ Try now: zkey.org
 
 # The Architecture of zKey
 <p align="center">
-  <img src="~assets/Image/zKey%20Flowchart.jpg" alt="Starknet.unity logo" width="200px"/>
+  <img src="~assets/Image/zKey%20Flowchart.jpg" alt="zKey Flowchart" width="600px"/>
 </p >
 
 ## Get JWT As The Certificate
