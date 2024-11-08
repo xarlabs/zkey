@@ -24,7 +24,6 @@ import tokenApiJson from "@/config/tokenApi";
 import { getWalletPrices, setOutsideDeploy, getOutsideExecute } from "@/http";
 import walletAbi from "@/config/walletAbi";
 import { genID } from "@/utils/compute";
-import ETH from "Assets/images/ETH.png";
 const WalletProvider = (props: IWalletProviderProps) => {
   const { children, currencyAddress, handleTransferCallBack } = props;
   const { rpcPubKey } = useZkPrivate();
@@ -117,7 +116,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
           newContract["sum"] = new Big(newContract["balance"])
             .times(new Big(newContract["prices"]))
             .toNumber();
-          newContract["ico"] = ETH; // "Assets/images/" + newContract["walletName"] + ".png";
           resolve(newContract);
         } catch (error) {
           console.log("queryContractData", error);
