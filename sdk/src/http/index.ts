@@ -70,9 +70,10 @@ export const getRpcPublicKey = async () => {
   });
 };
 
-export const setOutsideDeploy = (pub_hash: string) => {
+export const setOutsideDeploy = (pub_hash: string, isMainnet = true) => {
   const urlencoded = new URLSearchParams();
   urlencoded.append("pub_hash", pub_hash);
+  urlencoded.append("env", isMainnet ? "mainnet" : "");
   return http({
     method: "POST",
     url: "/jsserver/api/paymaster/outside_deploy",
@@ -82,9 +83,10 @@ export const setOutsideDeploy = (pub_hash: string) => {
 };
 
 // 重设公私钥
-export const getOutsideExecute = (stringified: string) => {
+export const getOutsideExecute = (stringified: string, isMainnet = true) => {
   const urlencoded = new URLSearchParams();
   urlencoded.append("outsideTransaction1", stringified);
+  urlencoded.append("env", isMainnet ? "mainnet" : "");
   return http({
     method: "POST",
     url: "/jsserver/api/paymaster/outside_execute",

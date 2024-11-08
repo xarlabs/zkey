@@ -2,6 +2,7 @@ export enum StorageEnum {
   "USER_INFO" = "USER_INFO",
   "WALLET_DETAIL" = "WALLET_DETAIL",
   "CONTRACT_OPTION" = "CONTRACT_OPTION",
+  "WALLET_NETWORK" = "WALLET_NETWORK",
 }
 
 export function handleLocalStorage(method: string, key: string, value?: any) {

@@ -16,8 +16,8 @@ import {
 } from "./compute";
 
 import {
-  OZaccountClassHash,
-  executorprivateKey,
+  // getNetworkClassHash,
+  // executorprivateKey,
   executoraccountAddress,
 } from "../config/walletConfig";
 
@@ -66,6 +66,7 @@ export async function getContractAddress({
   jwtToken,
   exp,
   jwtClaim,
+  classHash,
 }: IContractAddress) {
   const { issVersion, audVersion } = jwtClaim;
   try {
@@ -124,7 +125,7 @@ export async function getContractAddress({
 
     const OZcontractAddress = hash.calculateContractAddressFromHash(
       pub_hash,
-      OZaccountClassHash,
+      classHash,
       OZaccountConstructorCallData,
       0,
     );
@@ -167,6 +168,7 @@ export async function generateAccountAddress({
   jwtToken,
   salt,
   jwtClaim,
+  classHash,
 }: IContractAddress) {
   // 计算钱包地址
   const { OZaccount, OZcontractAddress, OZaccountConstructorCallData, pub_hash, sub, param_data } =
@@ -177,6 +179,7 @@ export async function generateAccountAddress({
       exp,
       salt,
       jwtClaim,
+      classHash,
     });
 
   const isDeploy = await checkWalletDeploy({ accountAddress: OZcontractAddress, provider });
@@ -197,15 +200,15 @@ export function u256toWeb(u256: any, decimals = 18) {
   return shortNum(Num);
 }
 
-export async function setWalletDeploy({ callData, pub_hash, provider, account }) {
-  const { transaction_hash, contract_address } = await account.deployAccount({
-    classHash: OZaccountClassHash,
-    constructorCalldata: callData,
-    addressSalt: pub_hash,
-  });
-  // 执行
-  await provider.waitForTransaction(transaction_hash);
-}
+// export async function setWalletDeploy({ callData, pub_hash, provider, account }) {
+//   const { transaction_hash, contract_address } = await account.deployAccount({
+//     classHash: OZaccountClassHash, //getNetworkClassHash
+//     constructorCalldata: callData,
+//     addressSalt: pub_hash,
+//   });
+//   // 执行
+//   await provider.waitForTransaction(transaction_hash);
+// }
 
 export async function checkZKeyLogin(rpcPubKey, input: any, jwtLength: number) {
   const INPUT = JSON.stringify(input);
@@ -221,44 +224,51 @@ export async function checkZKeyLogin(rpcPubKey, input: any, jwtLength: number) {
   return proof;
 }
 
-export async function walletResetPub({ account, provider, accountAddress, proof }) {
-  const calls = proof
-    .replace(/\s/g, "") // 去除空格和换行符
-    .slice(1, -1) // 去掉数组的方括号
-    .split(",") // 按逗号分割字符串
-    .map((num) => num.trim()); // 去掉每个数字周围的空白字符
+// export async function walletResetPub({ account, provider, accountAddress, proof }) {
+//   const calls = proof
+//     .replace(/\s/g, "") // 去除空格和换行符
+//     .slice(1, -1) // 去掉数组的方括号
+//     .split(",") // 按逗号分割字符串
+//     .map((num) => num.trim()); // 去掉每个数字周围的空白字符
 
-  const calls_data = {
-    contractAddress: accountAddress,
-    entrypoint: "zk_set_public_key",
-    calldata: CallData.compile({
-      prefix: "0x535441524b4e45545f434f4e54524143545f41444452455353",
-      account_hash: OZaccountClassHash,
-      platform: "0x1",
-      calls: calls.slice(1),
-    }),
-  };
+//   const calls_data = {
+//     contractAddress: accountAddress,
+//     entrypoint: "zk_set_public_key",
+//     calldata: CallData.compile({
+//       prefix: "0x535441524b4e45545f434f4e54524143545f41444452455353",
+//       account_hash: OZaccountClassHash,
+//       platform: "0x1",
+//       calls: calls.slice(1),
+//     }),
+//   };
 
-  const result = await account.execute(calls_data);
+//   const result = await account.execute(calls_data);
 
-  // 获取当前时间
-  const startTime = new Date().getTime();
-  // 执行交易
-  await provider.waitForTransaction(result.transaction_hash, {
-    retryInterval: 1000,
-    successStates: [TransactionStatus.ACCEPTED_ON_L2],
-  });
-  // 获取执行结束时间
-  const endTime = new Date().getTime();
-  // 计算执行时间
-  const duration = endTime - startTime;
+//   // 获取当前时间
+//   const startTime = new Date().getTime();
+//   // 执行交易
+//   await provider.waitForTransaction(result.transaction_hash, {
+//     retryInterval: 1000,
+//     successStates: [TransactionStatus.ACCEPTED_ON_L2],
+//   });
+//   // 获取执行结束时间
+//   const endTime = new Date().getTime();
+//   // 计算执行时间
+//   const duration = endTime - startTime;
 
-  console.log(`执行时间为${duration}ms`);
+//   console.log(`执行时间为${duration}ms`);
 
-  return calls_data;
-}
+//   return calls_data;
+// }
 
-export async function newWalletResetPub({ account, provider, accountAddress, proof }) {
+export async function newWalletResetPub({
+  account,
+  provider,
+  accountAddress,
+  proof,
+  classHash,
+  exrcutorAddress,
+}) {
   try {
     const calls = proof
       .replace(/\s/g, "") // 去除空格和换行符
@@ -271,15 +281,15 @@ export async function newWalletResetPub({ account, provider, accountAddress, pro
       entrypoint: "zk_set_public_key",
       calldata: CallData.compile({
         prefix: "0x535441524b4e45545f434f4e54524143545f41444452455353",
-        account_hash: OZaccountClassHash,
+        account_hash: classHash,
         platform: "0x1",
         calls: calls.slice(1),
       }),
     };
     console.log("calls_data -->", calls_data);
-    const executorAccount = new Account(provider, executoraccountAddress, executorprivateKey);
+    // const executorAccount = new Account(provider, executoraccountAddress, executorprivateKey);
     const callOptions = {
-      caller: executorAccount.address,
+      caller: exrcutorAddress,
       execute_after: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
       execute_before: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
     };

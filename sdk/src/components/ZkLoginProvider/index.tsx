@@ -14,7 +14,14 @@ import { ZkPrivateContext, ZkStateContext, ZkDispatcherContext } from "./Provide
 export { useZkPrivate, useZkState, useZkDispatcher, useZkContext } from "./Provider";
 import { IZkLoginProviderProps, IUserInfo, IWalletConfig, IWalletDetail, IZkState } from "./types";
 import { handleLocalStorage, StorageEnum } from "@/utils/storage";
-import { nodeUrl } from "../../config/walletConfig";
+import {
+  MainnetNodeUrl,
+  SepoliaNodeUrl,
+  MainnetName,
+  SepoliaName,
+  getNetworkNodeUrl,
+  getNetworkClassHash,
+} from "../../config/walletConfig";
 import { generateRandomness, generateAccountAddress } from "@/utils/wallet";
 import { getJWTData, findJwtClaim, createNewInputs } from "@/utils/proof";
 import walletAbi from "@/config/walletAbi";
@@ -23,9 +30,9 @@ import { generateNonce, getRpcPublicKey } from "@/http";
 const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
   const { children, handleLogOutCallback, handleLogInCallback } = props;
   // rpc 实例
-  const provider = useRef(new RpcProvider({ nodeUrl }));
+  const provider = useRef(new RpcProvider({ nodeUrl: MainnetNodeUrl }));
   // 全局网络状态
-  const [globalNetwork, setGlobalNetwork] = useState("Sepolia");
+  const [globalNetwork, setGlobalNetwork] = useState(MainnetName);
   // 登录loading
   const [loginLoading, setLoginLoading] = useState<boolean>(false);
   // 登录阶段文本
@@ -67,7 +74,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
       // 解析jwt
       const jwtData = getJWTData(jwtToken);
 
-      let salt = jwtData.sub; //parseInt((Math.random() * 1000000).toString()); // jwtData.sub;
+      let salt = 2955; //jwtData.sub; //parseInt((Math.random() * 1000000).toString()); // jwtData.sub;
 
       //"123" 2955
       const jwtClaim = findJwtClaim(jwtData);
@@ -103,6 +110,7 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         exp,
         salt,
         jwtClaim,
+        classHash: getNetworkClassHash(globalNetwork),
       });
       // L3 实例
       const userL3Account = new Account(
@@ -179,8 +187,25 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
     handleLogOutCallback && handleLogOutCallback();
     await getNonce();
   }, [handleLogOutCallback]);
+
+  const handleWalletNetworkChange = (network: string) => {
+    if ([MainnetName, SepoliaName].includes(network)) {
+      provider.current = new RpcProvider({
+        nodeUrl: network === SepoliaName ? SepoliaNodeUrl : MainnetNodeUrl,
+      });
+      setGlobalNetwork(network);
+      handleLocalStorage("set", StorageEnum.WALLET_NETWORK, network);
+      handleUserLogOut();
+    }
+  };
+  // MainnetName,
+  // SepoliaName,
   useEffect(() => {
     const walletInit = async () => {
+      const storageWalletNetwork: boolean | string | undefined = handleLocalStorage(
+        "get",
+        StorageEnum.WALLET_NETWORK,
+      );
       // 获取本地存储的数据
       const storageWalletDetail: boolean | string | undefined = handleLocalStorage(
         "get",
@@ -190,6 +215,12 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
         "get",
         StorageEnum.USER_INFO,
       );
+      if (storageWalletNetwork) {
+        provider.current = new RpcProvider({
+          nodeUrl: getNetworkNodeUrl(storageWalletNetwork),
+        });
+        setGlobalNetwork(storageWalletNetwork);
+      }
       if (storageWalletDetail && storageUserInfo) {
         try {
           const walletDetailParse: IWalletDetail = JSON.parse(storageWalletDetail);
@@ -284,8 +315,9 @@ const ZKeyLoginProvider = (props: IZkLoginProviderProps) => {
     () => ({
       handleChangeDeploy,
       handleUserLogOut,
+      handleWalletNetworkChange,
     }),
-    [handleChangeDeploy, handleUserLogOut],
+    [handleChangeDeploy, handleUserLogOut, handleWalletNetworkChange],
   );
 
   return (

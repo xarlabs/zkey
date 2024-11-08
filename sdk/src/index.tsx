@@ -22,3 +22,6 @@ export {
   useWalletState,
   useWalletDispatcher,
 } from "./components/WalletProvider";
+
+import { MainnetName, SepoliaName } from "./config/walletConfig";
+export { MainnetName, SepoliaName };

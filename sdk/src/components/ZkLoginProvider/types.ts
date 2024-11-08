@@ -45,6 +45,7 @@ export interface IZkPrivate {
 export interface IZkState {
   provider: null | RpcProvider;
   userInfo: IUserInfo | null;
+  globalNetwork: string;
   globalAccount: AccountInterface | null;
   globalL3Account: AccountInterface | null;
   isDeploy: boolean;

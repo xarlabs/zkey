@@ -10,6 +10,18 @@ Object.defineProperty(exports, "GoogleLoginButton", {
     return _GoogleLogin["default"];
   }
 });
+Object.defineProperty(exports, "MainnetName", {
+  enumerable: true,
+  get: function get() {
+    return _walletConfig.MainnetName;
+  }
+});
+Object.defineProperty(exports, "SepoliaName", {
+  enumerable: true,
+  get: function get() {
+    return _walletConfig.SepoliaName;
+  }
+});
 Object.defineProperty(exports, "WalletProvider", {
   enumerable: true,
   get: function get() {
@@ -61,6 +73,7 @@ Object.defineProperty(exports, "useZkState", {
 var _ZkLoginProvider = _interopRequireWildcard(require("./components/ZkLoginProvider"));
 var _GoogleLogin = _interopRequireDefault(require("./components/GoogleLogin"));
 var _WalletProvider = _interopRequireWildcard(require("./components/WalletProvider"));
+var _walletConfig = require("./config/walletConfig");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { "default": e }; }
 function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
 function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }

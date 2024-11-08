@@ -17,8 +17,11 @@ import {
   SEPOLIA_DEF_CONTRACT_ADDRESS,
   GAS_ADDRESS,
   WALLET_V3_ADDRESS,
-  OZaccountClassHash,
+  getNetworkClassHash,
+  getExecutorAddress,
+  MainnetName,
 } from "@/config/walletConfig";
+
 import { IWalletProviderProps, TWalletEvent, ITransferProps } from "./type";
 import tokenApiJson from "@/config/tokenApi";
 import { getWalletPrices, setOutsideDeploy, getOutsideExecute } from "@/http";
@@ -27,7 +30,8 @@ import { genID } from "@/utils/compute";
 const WalletProvider = (props: IWalletProviderProps) => {
   const { children, currencyAddress, handleTransferCallBack } = props;
   const { rpcPubKey } = useZkPrivate();
-  const { globalAccount, globalL3Account, provider, isDeploy, walletDetail } = useZkState();
+  const { globalNetwork, globalAccount, globalL3Account, provider, isDeploy, walletDetail } =
+    useZkState();
 
   const { handleChangeDeploy, handleUserLogOut } = useZkDispatcher();
 
@@ -179,7 +183,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
           try {
             const { suggestedMaxFee: estimatedFee1 } =
               await transferAccount?.estimateAccountDeployFee({
-                classHash: OZaccountClassHash,
+                classHash: getNetworkClassHash(globalNetwork),
                 constructorCalldata: callData,
                 contractAddress: transferAccount.address,
               });
@@ -216,7 +220,9 @@ const WalletProvider = (props: IWalletProviderProps) => {
     },
     [isDeploy, transferAccount, walletDetail, activeWallet],
   );
-
+  const eventRemove = (id: string) => {
+    setTransferList((state) => state.filter((item) => item.id !== id));
+  };
   // deploy 逻辑
   const handleWalletDeploy = async (
     transferData: ITransferProps,
@@ -236,7 +242,7 @@ const WalletProvider = (props: IWalletProviderProps) => {
       try {
         console.time("setOutsideDeploy");
         const [deployRes, proofRes] = await Promise.allSettled([
-          await setOutsideDeploy(pub_hash),
+          await setOutsideDeploy(pub_hash, globalNetwork === MainnetName),
           await checkZKeyLogin(rpcPubKey, input, jwtLength),
         ]);
         console.timeEnd("setOutsideDeploy");
@@ -274,6 +280,8 @@ const WalletProvider = (props: IWalletProviderProps) => {
               provider: provider,
               accountAddress: address,
               proof: proofRes.value,
+              classHash: getNetworkClassHash(globalNetwork),
+              exrcutorAddress: getExecutorAddress(globalNetwork),
             });
             console.time("resExecute");
             const resExecute = await getOutsideExecute(stringified);
@@ -298,6 +306,13 @@ const WalletProvider = (props: IWalletProviderProps) => {
                 : "Network error Please try again later",
             });
           }
+        } else {
+          console.log("deployRes error -->", deployRes.value);
+          deployChangeCallback({
+            ...transferData,
+            state: "error",
+            message: "Network error Please try again later",
+          });
         }
       } catch (error) {
         deployChangeCallback({
@@ -309,11 +324,8 @@ const WalletProvider = (props: IWalletProviderProps) => {
         });
       }
     } else {
-      deployChangeCallback({
-        ...transferData,
-        state: "success",
-        message: "Deploying Success",
-      });
+      eventRemove(transferData.id);
+      eventTrigger("resetPub");
     }
   };
 
@@ -358,9 +370,11 @@ const WalletProvider = (props: IWalletProviderProps) => {
             provider: provider,
             accountAddress: address,
             proof: proof,
+            classHash: getNetworkClassHash(globalNetwork),
+            exrcutorAddress: getExecutorAddress(globalNetwork),
           });
           console.time("resExecute");
-          const resExecute = await getOutsideExecute(stringified);
+          const resExecute = await getOutsideExecute(stringified, globalNetwork === MainnetName);
           console.timeEnd("resExecute");
           const { transaction_hash } = resExecute.data;
           console.time("resExecute waitForTransaction");
@@ -390,11 +404,14 @@ const WalletProvider = (props: IWalletProviderProps) => {
           state: "error",
           message: "Sorry, you have timed out and are about to log out",
         });
+
         setTimeout(() => {
           handleUserLogOut();
         }, [5000]);
         return;
       }
+    } else {
+      eventRemove(transferData.id);
     }
   };
 
@@ -448,9 +465,6 @@ const WalletProvider = (props: IWalletProviderProps) => {
     }
   };
 
-  const eventRemove = (id: string) => {
-    setTransferList((state) => state.filter((item) => item.id !== id));
-  };
   const eventEndDis = (eventList: ITransferProps[], id: string) => {
     const newTransList = eventList.filter((item) => item.id !== id);
     eventManage(newTransList);
@@ -634,6 +648,8 @@ const WalletProvider = (props: IWalletProviderProps) => {
       getAccountBalance();
       if (!isDeploy) {
         eventTrigger("deploy");
+      } else {
+        eventTrigger("resetPub");
       }
     }
     return () => {

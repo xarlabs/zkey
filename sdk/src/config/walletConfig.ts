@@ -34,9 +34,6 @@ export const GAS_ADDRESS = [ethContract, strkContract];
 // L3 地址
 export const WALLET_V3_ADDRESS = [strkContract];
 
-// rpc 地址
-export const nodeUrl = "https://starknet-sepolia.infura.io/v3/4e0254d8df42470d8f956bc989beef09"; //"https://free-rpc.nethermind.io/sepolia-juno/v0_7";
-
 // 测试账号
 export const testPrivateKey = "0x460ea0c9712b2d3918cff2d967f314974eeb91ebda2f6b65024d66a70e3bf70";
 export const testPublicKey = "0x5b4facbd0895128d8480e2b99391bd7fc31e12a13b38f708941a8a9fc8beccc";
@@ -45,11 +42,48 @@ export const testAddress = "0x047585f373226434a5f5c0925a4b959cd28cc741d869e212e7
 // new account
 // export const OZaccountClassHash = "0x015f16375a75b6c48c6decaf81683af6c06866d28ba546c26241a30de057cba9";
 
-export const OZaccountClassHash =
+// 主网及测试网的名称
+export const MainnetName = "Mainnet";
+export const SepoliaName = "Sepolia";
+
+export const MainnetClassHash =
+  "0x04a255542e0f90d7757eadbd33723256a05cd08f296e5694cf7f86ebbf388834";
+
+export const SepoliaClassHash =
   "0x051e601c16b4cc6e3623bf3a039e8b327ffcf6a85d37a2d52fd0f19c4b32253a";
 
+export const getNetworkClassHash = (networkName: string) => {
+  if (networkName === MainnetName) {
+    return MainnetClassHash;
+  } else {
+    return SepoliaClassHash;
+  }
+};
 // 执行重设公钥
 export const executorprivateKey =
   "0x0263d912b77396cf6dab14305586cf49188eee9b11d457d1649449f09bae4e70";
-export const executoraccountAddress =
+export const MainnetExecutoraccountAddress =
+  "0x052b8b5d536319a715b215d05659bd8f676d63cf4d78d60923b458be63a7ed8c";
+export const SepoliaExecutoraccountAddress =
   "0x0064a870739F53f72833A305E9612F139eB779C06615e03252a4d12fB73e4525";
+export const getExecutorAddress = (networkName: string) => {
+  if (networkName === MainnetName) {
+    return MainnetExecutoraccountAddress;
+  } else {
+    return SepoliaExecutoraccountAddress;
+  }
+};
+
+// rpc 地址
+export const MainnetNodeUrl =
+  "https://starknet-mainnet.infura.io/v3/4e0254d8df42470d8f956bc989beef09";
+export const SepoliaNodeUrl =
+  "https://starknet-sepolia.infura.io/v3/4e0254d8df42470d8f956bc989beef09"; //"https://free-rpc.nethermind.io/sepolia-juno/v0_7";
+
+export const getNetworkNodeUrl = (networkName: string) => {
+  if (networkName === MainnetName) {
+    return MainnetNodeUrl;
+  } else {
+    return SepoliaNodeUrl;
+  }
+};
